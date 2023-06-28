@@ -197,9 +197,9 @@ label_col_remove$Initials <- "M.T.C." # Change this to your initials if you're d
 
 ### sheet X of X designation ###
 # if occurrenceRemarks contains "Sheet X of X" or "Box X of X", pull that out and put it in General \nComments instead
-label_col_remove$General..nComments <- str_extract(label_col_remove$occurrenceRemarks, '\\w+ \\d of \\d')
+label_col_remove$General..nComments <- str_extract(label_col_remove$occurrenceRemarks, '(\\w+)?\\s?\\d of \\d')
 # then, remove "sheet/box X of X" from occurrence remarks & any weird lingering punctuation
-label_col_remove$occurrenceRemarks <- str_remove_all(label_col_remove$occurrenceRemarks, '\\w+ \\d of \\d')
+label_col_remove$occurrenceRemarks <- str_remove_all(label_col_remove$occurrenceRemarks, '(\\w+)?\\s?\\d of \\d')
 #label_col_remove$occurrenceRemarks <- str_remove_all(label_col_remove$occurrenceRemarks, '[Ss]heet')
 #label_col_remove$occurrenceRemarks <- sub('[[:punct:]]+\\s?\\s?$', '',label_col_remove$occurrenceRemarks)
 #label_col_remove$occurrenceRemarks <- sub('^\\s?[[:punct:]]+\\s', '', label_col_remove$occurrenceRemarks)
@@ -207,8 +207,19 @@ label_col_remove$occurrenceRemarks <- str_remove_all(label_col_remove$occurrence
 #label_col_remove$General..nComments <- ifelse(label_col_remove$General..nComments == "",
 #                                              NA,
 #                                              paste0("Sheet ",label_col_remove$General..nComments))
-# check occurrence remarks
+# capitalizing first letter of sheet or box
+label_col_remove$General..nComments <- gsub("^([a-z])", "\\U\\1", label_col_remove$General..nComments, perl=TRUE)
+# replacing NA's with blank strings
+label_col_remove$General..nComments[is.na(label_col_remove$General..nComments)] <- ""
+# if the comments only contain '# of #", add sheet infront
+label_col_remove$General..nComments <- ifelse(grepl("\\w+ \\d of \\d",label_col_remove$General..nComments),
+                                 label_col_remove$General..nComments,
+                                 paste0("Sheet ",label_col_remove$General..nComments))
+# remove blank sheet designations
+label_col_remove$General..nComments[label_col_remove$General..nComments == "Sheet "] <- ""
+# check occurrence remarks & notes
 unique(label_col_remove$occurrenceRemarks)
+unique(label_col_remove$General..nComments)
 
 
 ### # of sheets designation ###
@@ -269,29 +280,42 @@ label_col_remove$associatedCollectors <- gsub("\\s$","",label_col_remove$associa
 # if a name contains two initials (e.g., K.C.), I add a space between the two (^(\\.)([^ ])","\\1 \\2)
 # ([A-Za-z\\.?]+) a word of any size that may or may not contain a period
 # ([A-Za-z\\.]+ )? a word of any size (that may or may not be present, hence ?), that might have a dot somewhere, and a space at the end
+#label_names <- label_col_remove %>%
+#  mutate(recordedBy = gsub(pattern = "^(\\.)([^ ])","\\1 \\2", recordedBy),
+#         recordedBy = gsub('([A-Za-z\\.?]+) ([A-Za-z\\.]+ )?([A-Za-z]+)?', '\\1=\\2=\\3', recordedBy)) %>%
+#  separate(recordedBy, c("Collector.First.Name1", "Collector.Middle1", "Collector.Last.Name1"), "=")
 label_names <- label_col_remove %>%
-  mutate(recordedBy = gsub(pattern = "^(\\.)([^ ])","\\1 \\2", recordedBy),
-         recordedBy = gsub('([A-Za-z\\.?]+) ([A-Za-z\\.]+ )?([A-Za-z]+)?', '\\1=\\2=\\3', recordedBy)) %>%
-  separate(recordedBy, c("Collector.First.Name1", "Collector.Middle1", "Collector.Last.Name1"), "=")
-
+  extract(recordedBy,
+          into = c("Collector.First.Name1", "Collector.Middle1", "Collector.Last.Name1"),
+          regex = "(\\w+\\.?)\\s*(?:([^\\s,]+)\\s)?(?:(\\w+(?:,\\sJr\\.)?))?")
 
 ### splitting identifier column into first, last, and middle names ###
+#label_names <- label_names %>%
+#  mutate(identifiedBy = gsub(pattern = "^(\\.)([^ ])","\\1 \\2", identifiedBy),
+#         identifiedBy = gsub('([A-Za-z\\.?]+) ([A-Za-z\\.]+ )?([A-Za-z]+)?', '\\1=\\2=\\3', identifiedBy)) %>%
+#  separate(identifiedBy, c("Determiner.First.Name1", "Determiner.Middle1", "Determiner.Last.Name1"), "=")
 label_names <- label_names %>%
-  mutate(identifiedBy = gsub(pattern = "^(\\.)([^ ])","\\1 \\2", identifiedBy),
-         identifiedBy = gsub('([A-Za-z\\.?]+) ([A-Za-z\\.]+ )?([A-Za-z]+)?', '\\1=\\2=\\3', identifiedBy)) %>%
-  separate(identifiedBy, c("Determiner.First.Name1", "Determiner.Middle1", "Determiner.Last.Name1"), "=")
-
+  mutate(identifiedBy=str_replace_all(identifiedBy,"\\, Jr\\.?"," Jr.")) %>% # this removes the comma before "Jr." so the next line of code works
+  mutate(identifiedBy=str_replace_all(identifiedBy,"\\,\\s"," and ")) %>% # this replaces any ", " separators with " and"
+  separate(col = identifiedBy, into = c("first_det", "second_det"), sep = " and ") %>%
+  extract(first_det,
+          into = c("Determiner.First.Name1", "Determiner.Middle1", "Determiner.Last.Name1"),
+          regex = "(\\w+\\.?)\\s*(?:([^\\s,]+)\\s)?(?:(\\w+(?:\\sJr\\.)?))?") %>%
+  extract(second_det,
+          into = c("Determiner.First.Name2", "Determiner.Middle2", "Determiner.Last.Name2"),
+          regex = "(\\w+\\.?)\\s*(?:([^\\s,]+)\\s)?(?:(\\w+(?:\\sJr\\.)?))?")
 
 ### splitting additional collectors into their names ###
 label_names <- label_names %>%  
-  mutate(associatedCollectors=str_replace_all(associatedCollectors," and ",", ")) %>% # this replaces any "and" separators with ",
-  separate(col = associatedCollectors, into = c("second", "third"), sep = "\\,") %>%
-  mutate(second = gsub(pattern = "^(\\.)([^ ])","\\1 \\2", second)) %>%
-  mutate(third = gsub(pattern = "^(\\.)([^ ])","\\1 \\2", third)) %>%
-  mutate(second = gsub('([A-Za-z\\.?]+) ([A-Za-z\\.]+ )?([A-Za-z]+)?', '\\1=\\2=\\3', second)) %>%
-  separate(second, c("Collector.First.Name2", "Collector.Middle2", "Collector.Last.Name2"), "=") %>%
-  mutate(third = gsub('([A-Za-z\\.?]+) ([A-Za-z\\.]+ )?([A-Za-z]+)?', '\\1=\\2=\\3', third)) %>%
-  separate(third, c("Collector.First.Name3", "Collector.Middle3", "Collector.Last.Name3"), "=")
+  mutate(associatedCollectors=str_replace_all(associatedCollectors,"\\, Jr\\.?"," Jr.")) %>% # this removes the comma before "Jr." so the next line of code works
+  mutate(associatedCollectors=str_replace_all(associatedCollectors,"\\,\\s"," and ")) %>% # this replaces any ", " separators with " and"
+  separate(col = associatedCollectors, into = c("second", "third"), sep = " and ") %>%
+  extract(second,
+          into = c("Collector.First.Name2", "Collector.Middle2", "Collector.Last.Name2"),
+          regex = "(\\w+\\.?)\\s*(?:([^\\s,]+)\\s)?(?:(\\w+(?:\\sJr\\.)?))?") %>%
+  extract(third,
+          into = c("Collector.First.Name3", "Collector.Middle3", "Collector.Last.Name3"),
+          regex = "(\\w+\\.?)\\s*(?:([^\\s,]+)\\s)?(?:(\\w+(?:\\sJr\\.)?))?")
 
 
 ### replace periods in column names with spaces ###
@@ -337,7 +361,6 @@ colnames(label_names)[colnames(label_names) == "RangeDirection"] ="Range Directi
 colnames(label_names)[colnames(label_names) == "SectionPart"] ="Section Part"
 colnames(label_names)[colnames(label_names) == "X  of Sheets"] ="# of Sheets"
 colnames(label_names)[colnames(label_names) == "General  nComments"] ="General \\nComments"
-### manually renaming some names to match specify template ###
 colnames(label_names)[colnames(label_names) == "Catalog  "] ="Catalog #"
 #colnames(label_names)[colnames(label_names) == "Verbatim Coll  "] ="Verbatim Coll #"
 #colnames(label_names)[colnames(label_names) == "Comments  n SpecDeterm  1"] ="Comments \\n(SpecDeterm) 1"
