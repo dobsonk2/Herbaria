@@ -140,7 +140,7 @@ write.csv(label_col_remove2, "test3_plants.csv", row.names=F, fileEncoding = "UT
 
 ### Read in data ###
 # change the name for the label file from "test.csv" to the name of the file you want to re-format
-label <- read.csv("occurrences2.csv",fileEncoding="UTF-8")
+label <- read.csv("occurrences3.csv",fileEncoding="UTF-8")
 
 
 ### removing columns from symbiota data that specify template does not need ###
@@ -202,7 +202,7 @@ label_col_remove$X..of.Sheets <- str_extract(label_col_remove$General..nComments
 label_col_remove <- label_col_remove %>%
   mutate(
     latLong = gsub(
-      ".*?;? ?([NSEW]? ?[\\d\\.]+°[ \\d'\",-NSEW°]*[NSEW°'\"])? ?;?.*", 
+      ".*?;? ?([NSEW]? ?[\\d\\.]+°?[ \\d'\",-NSEW°?]*[NSEW°?'\"])? ?;?.*", # I don't think this part works, but thats okay since we have separate columns for lat and long
       "\\1", verbatimCoordinates, perl = TRUE),
     trs = gsub(
       ".*?;? ?(TRS:[\\w /]*\\w)? ?;?.*", 
@@ -251,7 +251,6 @@ unique(label_col_remove$recordedBy)
 unique(label_col_remove$identifiedBy)
 unique(label_col_remove$associatedCollectors)
 # fixing names in the format "Last name, First name" because they won't work in the regex
-# only run this if you notice names written in the wrong format
 # the incorrect format goes first, followed by the correct format
 # can also change "identifiedBy" to "recordedBy" or "associatedCollectors" if those columns contain weird name formats
 label_col_remove$identifiedBy[label_col_remove$identifiedBy == "Nugent, Therese"] <- "Therese Nugent"
@@ -270,7 +269,8 @@ label_names <- label_col_remove %>%
 # aren't present for every record (likely there will not be 2 for every record)
 label_names <- label_names %>%
   mutate(identifiedBy=str_replace_all(identifiedBy,"\\, Jr\\.?"," Jr.")) %>% # this removes the comma before "Jr." so the next line of code works
-  mutate(identifiedBy=str_replace_all(identifiedBy,"\\,\\s"," and ")) %>% # this replaces any ", " separators with " and"
+  mutate(identifiedBy=str_replace_all(identifiedBy,"\\,\\s(?!and)"," and ")) %>% # this replaces any ", " separators with " and "
+  mutate(identifiedBy=str_replace_all(identifiedBy,"\\, and "," and ")) %>% # this replaces and ", and " with " and "
   separate(col = identifiedBy, into = c("first_det", "second_det"), sep = " and ") %>%
   extract(first_det,
           into = c("Determiner.First.Name1", "Determiner.Middle1", "Determiner.Last.Name1"),
@@ -285,7 +285,8 @@ label_names <- label_names %>%
 # aren't present for every record (likely there will not be 2 for every record)
 label_names <- label_names %>%  
   mutate(associatedCollectors=str_replace_all(associatedCollectors,"\\, Jr\\.?"," Jr.")) %>% # this removes the comma before "Jr." so the next line of code works
-  mutate(associatedCollectors=str_replace_all(associatedCollectors,"\\,\\s"," and ")) %>% # this replaces any ", " separators with " and"
+  mutate(associatedCollectors=str_replace_all(associatedCollectors,"\\,\\s(?!and)"," and ")) %>% # this replaces any ", " separators with " and "
+  mutate(associatedCollectors=str_replace_all(associatedCollectors,"\\, and "," and ")) %>% # this replaces and ", and " with " and "
   separate(col = associatedCollectors, into = c("second", "third", "fourth" ,"fifth","sixth","seventh"), sep = " and ") %>%
   extract(second,
           into = c("Collector.First.Name2", "Collector.Middle2", "Collector.Last.Name2"),
