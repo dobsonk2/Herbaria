@@ -18,6 +18,10 @@ library(tidyverse)
 
 
 ############################### Label template to symbiota template #################################
+### notes for things to check in the raw excel file before running this code:
+# make sure only 1 name is present for "primary collector", all other collectors should go under "additional collectors"
+# make sure additional collectors are separated by commas or "and"
+
 
 ### Read in data ###
 # export the excel file to the UTF-8 CSV format
@@ -140,7 +144,7 @@ write.csv(label_col_remove2, "test3_plants.csv", row.names=F, fileEncoding = "UT
 
 ### Read in data ###
 # change the name for the label file from "test.csv" to the name of the file you want to re-format
-label <- read.csv("occurrences3.csv",fileEncoding="UTF-8")
+label <- read.csv("occurrences4.csv",fileEncoding="UTF-8")
 
 
 ### removing columns from symbiota data that specify template does not need ###
@@ -250,11 +254,20 @@ label_col_remove$associatedCollectors <- gsub("\\s$","",label_col_remove$associa
 unique(label_col_remove$recordedBy)
 unique(label_col_remove$identifiedBy)
 unique(label_col_remove$associatedCollectors)
-# fixing names in the format "Last name, First name" because they won't work in the regex
+# fixing names in the wrong format - only need to run the lines below if things are formatted incorrectly
+# any names written as "Last name, First name" will need corrected
+# multiple names that aren't separated by commas or "and" will need corrected (e.g., semicolons, or "with")
+    # note: if multiple names are within "recordedBy", its probably easiest to separate this into "recordedBy" and "associatedCollectors"
+    # in the raw csv before reading it into R. 
 # the incorrect format goes first, followed by the correct format
 # can also change "identifiedBy" to "recordedBy" or "associatedCollectors" if those columns contain weird name formats
 label_col_remove$identifiedBy[label_col_remove$identifiedBy == "Nugent, Therese"] <- "Therese Nugent"
 label_col_remove$identifiedBy[label_col_remove$identifiedBy == "Sorrells, Ryan"] <- "Ryan Sorrells"
+label_col_remove$recordedBy[label_col_remove$recordedBy == "Turpin, BC"] <- "B.C. Turpin"
+label_col_remove$identifiedBy[label_col_remove$identifiedBy == "Burrows, JE"] <- "J.E. Burrows"
+label_col_remove$identifiedBy[label_col_remove$identifiedBy == "Will Burke with Anna Bunting, Bailey Greene, Michael Orbain"] <- "Will Burke, Anna Bunting, Bailey Greene, Michael Orbain"
+label_col_remove$identifiedBy[label_col_remove$identifiedBy == "Michael Orbain; Will Burke; Anna Bunting; Bailey Greene"] <- "Michael Orbain, Will Burke, Anna Bunting, Bailey Greene"
+label_col_remove$associatedCollectors[label_col_remove$associatedCollectors == "Burrows, JE and Marks, RA"] <- "J.E. Burrows, R.A. Marks"
 
 
 ### splitting recorded column into first, last, and middle names ###
