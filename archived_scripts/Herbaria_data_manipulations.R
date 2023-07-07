@@ -62,30 +62,30 @@ label_col_remove <- as.data.frame(apply(label_col_remove, 2, function(y) gsub("^
 
 
 ### re-naming label columns to be correct for symbiota ###
-colnames(label_col_remove)[colnames(label_col_remove) == "Collection.number"] ="recordNumber"
-colnames(label_col_remove)[colnames(label_col_remove) == "Barcode"] ="catalogNumber"
-colnames(label_col_remove)[colnames(label_col_remove) == "Accession.number"] ="otherCatalogNumbers"
-colnames(label_col_remove)[colnames(label_col_remove) == "Cultivated"] ="cultivationStatus"
-colnames(label_col_remove)[colnames(label_col_remove) == "Family"] ="family"
-colnames(label_col_remove)[colnames(label_col_remove) == "Genus"] ="genus"
-colnames(label_col_remove)[colnames(label_col_remove) == "Species"] ="specificEpithet"
-colnames(label_col_remove)[colnames(label_col_remove) == "State"] ="state"
-colnames(label_col_remove)[colnames(label_col_remove) == "County"] ="county"
-colnames(label_col_remove)[colnames(label_col_remove) == "Locality"] ="locality"
-colnames(label_col_remove)[colnames(label_col_remove) == "Latitude"] ="decimalLatitude"
-colnames(label_col_remove)[colnames(label_col_remove) == "Longitude"] ="decimalLongitude"
-colnames(label_col_remove)[colnames(label_col_remove) == "Habitat"] ="habitat"
-colnames(label_col_remove)[colnames(label_col_remove) == "Associated.species"] ="associatedTaxa"
-colnames(label_col_remove)[colnames(label_col_remove) == "Abundance"] ="individualCount"
-colnames(label_col_remove)[colnames(label_col_remove) == "Description"] ="verbatimAttributes"
-colnames(label_col_remove)[colnames(label_col_remove) == "Primary.collector"] ="recordedBy"
-colnames(label_col_remove)[colnames(label_col_remove) == "Additional.collectors"] ="associatedCollectors"
-colnames(label_col_remove)[colnames(label_col_remove) == "Date.collected"] ="eventDate"
-colnames(label_col_remove)[colnames(label_col_remove) == "Determiner"] ="identifiedBy"
-colnames(label_col_remove)[colnames(label_col_remove) == "Date.determined"] ="dateIdentified"
-colnames(label_col_remove)[colnames(label_col_remove) == "Infrarank"] ="verbatimTaxonRank"
-colnames(label_col_remove)[colnames(label_col_remove) == "infraEpithet"] ="infraSpecificEpithet"
-colnames(label_col_remove)[colnames(label_col_remove) == "Substrate"] ="substrate"
+colnames(label_col_remove)[colnames(label_col_remove) == "Collection.number"] <- "recordNumber"
+colnames(label_col_remove)[colnames(label_col_remove) == "Barcode"] <- "catalogNumber"
+colnames(label_col_remove)[colnames(label_col_remove) == "Accession.number"] <- "otherCatalogNumbers"
+colnames(label_col_remove)[colnames(label_col_remove) == "Cultivated"] <- "cultivationStatus"
+colnames(label_col_remove)[colnames(label_col_remove) == "Family"] <- "family"
+colnames(label_col_remove)[colnames(label_col_remove) == "Genus"] <- "genus"
+colnames(label_col_remove)[colnames(label_col_remove) == "Species"] <- "specificEpithet"
+colnames(label_col_remove)[colnames(label_col_remove) == "State"] <- "state"
+colnames(label_col_remove)[colnames(label_col_remove) == "County"] <- "county"
+colnames(label_col_remove)[colnames(label_col_remove) == "Locality"] <- "locality"
+colnames(label_col_remove)[colnames(label_col_remove) == "Latitude"] <- "decimalLatitude"
+colnames(label_col_remove)[colnames(label_col_remove) == "Longitude"] <- "decimalLongitude"
+colnames(label_col_remove)[colnames(label_col_remove) == "Habitat"] <- "habitat"
+colnames(label_col_remove)[colnames(label_col_remove) == "Associated.species"] <- "associatedTaxa"
+colnames(label_col_remove)[colnames(label_col_remove) == "Abundance"] <- "individualCount"
+colnames(label_col_remove)[colnames(label_col_remove) == "Description"] <- "verbatimAttributes"
+colnames(label_col_remove)[colnames(label_col_remove) == "Primary.collector"] <- "recordedBy"
+colnames(label_col_remove)[colnames(label_col_remove) == "Additional.collectors"] <- "associatedCollectors"
+colnames(label_col_remove)[colnames(label_col_remove) == "Date.collected"] <- "eventDate"
+colnames(label_col_remove)[colnames(label_col_remove) == "Determiner"] <- "identifiedBy"
+colnames(label_col_remove)[colnames(label_col_remove) == "Date.determined"] <- "dateIdentified"
+colnames(label_col_remove)[colnames(label_col_remove) == "Infrarank"] <- "verbatimTaxonRank"
+colnames(label_col_remove)[colnames(label_col_remove) == "infraEpithet"] <- "infraSpecificEpithet"
+colnames(label_col_remove)[colnames(label_col_remove) == "Substrate"] <- "substrate"
 
 
 ### making combined scientific name column (merging genus and species) ###
@@ -147,8 +147,10 @@ write.csv(label_col_remove2, "test3_plants.csv", row.names=F, fileEncoding = "UT
 ############################### Symbiota template to specify template #################################
 
 ### Read in data ###
+# download Symbiota data as UTF-8
 # change the name for the label file from "test.csv" to the name of the file you want to re-format
-label <- read.csv("occurrences4.csv",fileEncoding="UTF-8")
+label <- read_csv("20230706 Symbiota.csv")
+label <- as.data.frame(label)
 
 
 ### selecting columns from symbiota that specify needs ###
@@ -196,6 +198,7 @@ label_col_remove$X..of.Sheets <- str_extract(label_col_remove$General..nComments
 ### adding preparation type ###
 # replacing NA's with blank strings
 label_col_remove$preparations[is.na(label_col_remove$preparations)] <- ""
+# if prep type is blank, input "sheet" - if not, use what was already present in that column
 label_col_remove$PrepType1 <- ifelse(label_col_remove$preparations == "",
                                      "sheet",
                                      label_col_remove$preparations)
@@ -240,7 +243,10 @@ label_col_remove$SectionPart <- str_extract(label_col_remove$trs, '[:upper:][:up
 label_col_remove = subset(label_col_remove, select = -c(verbatimCoordinates,trs,utm))
 
 
-### if determiner column is empty, make the determiner the first collector ###
+### if determiner column is empty, make the first collector the determiner ###
+# replacing NA's with blank strings
+label_col_remove$identifiedBy[is.na(label_col_remove$identifiedBy)] <- ""
+# moving names over
 label_col_remove$identifiedBy <- ifelse(label_col_remove$identifiedBy == "",
                                         label_col_remove$recordedBy,
                                         label_col_remove$identifiedBy)
@@ -289,8 +295,8 @@ label_names = subset(label_names, select = -c(second_det))
 
 
 ### splitting additional collectors into their names ###
-# this might output a warning message that missing pieces are filled with NA - this is okay, it will happen if two associated collectors
-# aren't present for every record (likely there will not be 2 for every record)
+# this might output a warning message that missing pieces are filled with NA - this is okay, it will happen if two or more associated collectors
+# aren't present for every record (likely there will not be 2 or more for every record)
 label_names <- label_names %>%  
   mutate(associatedCollectors=str_replace_all(associatedCollectors,"\\, Jr\\.?"," Jr.")) %>% # this removes the comma before "Jr." so the next line of code works
   mutate(associatedCollectors=str_replace_all(associatedCollectors,"\\,\\s(?!and)"," and ")) %>% # this replaces any ", " separators with " and "
@@ -330,39 +336,39 @@ names(label_names) <- gsub(x = names(label_names), pattern = "\\.", replacement 
 
 
 ### re-naming label columns to be correct for specify ###
-colnames(label_names)[colnames(label_names) == "occurrenceID"] ="GUID"
-colnames(label_names)[colnames(label_names) == "recordNumber"] ="Collection Number"
-colnames(label_names)[colnames(label_names) == "otherCatalogNumbers"] ="MSC Accession #"
-colnames(label_names)[colnames(label_names) == "verbatimCollNum"] ="Verbatim Coll #"
-colnames(label_names)[colnames(label_names) == "catalogNumber"] ="Bar Code # 1"
-colnames(label_names)[colnames(label_names) == "BarCode"] ="Duplicate BarCode"
-colnames(label_names)[colnames(label_names) == "genus"] ="Genus1"
-colnames(label_names)[colnames(label_names) == "specificEpithet"] ="Species1"
-colnames(label_names)[colnames(label_names) == "country"] ="Country"
-colnames(label_names)[colnames(label_names) == "stateProvince"] ="State"
-colnames(label_names)[colnames(label_names) == "county"] ="County"
-colnames(label_names)[colnames(label_names) == "substrate"] ="Soil Type"
-colnames(label_names)[colnames(label_names) == "locality"] ="Locality"
-colnames(label_names)[colnames(label_names) == "decimalLatitude"] ="Latitude1"
-colnames(label_names)[colnames(label_names) == "decimalLongitude"] ="Longitude1"
-colnames(label_names)[colnames(label_names) == "habitat"] ="Verbatim Habitat"
-colnames(label_names)[colnames(label_names) == "associatedTaxa"] ="Associated Species"
-colnames(label_names)[colnames(label_names) == "individualCount"] ="Abundance"
-colnames(label_names)[colnames(label_names) == "occurrenceRemarks"] ="Comments (Collection Data)"
-colnames(label_names)[colnames(label_names) == "infraspecificEpithet"] ="Variety1"
-colnames(label_names)[colnames(label_names) == "eventDate"] ="Date"
-colnames(label_names)[colnames(label_names) == "verbatimDate"] ="Verbatim Date"
-colnames(label_names)[colnames(label_names) == "dateIdentified"] ="Ann Date 1"
-colnames(label_names)[colnames(label_names) == "verbatimAnnDate"] ="Verb Ann Date 1"
-colnames(label_names)[colnames(label_names) == "verbatimAttributes"] ="Field Characteristics"
-colnames(label_names)[colnames(label_names) == "latLong"] ="Verbatim Lat/Long"
-colnames(label_names)[colnames(label_names) == "TownshipDirection"] ="Township Direction"
-colnames(label_names)[colnames(label_names) == "RangeDirection"] ="Range Direction"
-colnames(label_names)[colnames(label_names) == "SectionPart"] ="Section Part"
-colnames(label_names)[colnames(label_names) == "X  of Sheets"] ="# of Sheets"
-colnames(label_names)[colnames(label_names) == "General  nComments"] ="General \\nComments"
-colnames(label_names)[colnames(label_names) == "Catalog  "] ="Catalog #"
-colnames(label_names)[colnames(label_names) == "PrepType1"] ="Prep Type1"
+colnames(label_names)[colnames(label_names) == "occurrenceID"] <- "GUID"
+colnames(label_names)[colnames(label_names) == "recordNumber"] <- "Collection Number"
+colnames(label_names)[colnames(label_names) == "verbatimCollNum"] <- "Verbatim Coll #"
+colnames(label_names)[colnames(label_names) == "otherCatalogNumbers"] <- "MSC Accession #"
+colnames(label_names)[colnames(label_names) == "catalogNumber"] <- "Bar Code # 1"
+colnames(label_names)[colnames(label_names) == "BarCode"] <- "Duplicate BarCode"
+colnames(label_names)[colnames(label_names) == "genus"] <- "Genus1"
+colnames(label_names)[colnames(label_names) == "specificEpithet"] <- "Species1"
+colnames(label_names)[colnames(label_names) == "country"] <- "Country"
+colnames(label_names)[colnames(label_names) == "stateProvince"] <- "State"
+colnames(label_names)[colnames(label_names) == "county"] <- "County"
+colnames(label_names)[colnames(label_names) == "substrate"] <- "Soil Type"
+colnames(label_names)[colnames(label_names) == "locality"] <- "Locality"
+colnames(label_names)[colnames(label_names) == "decimalLatitude"] <- "Latitude1"
+colnames(label_names)[colnames(label_names) == "decimalLongitude"] <- "Longitude1"
+colnames(label_names)[colnames(label_names) == "habitat"] <- "Verbatim Habitat"
+colnames(label_names)[colnames(label_names) == "associatedTaxa"] <- "Associated Species"
+colnames(label_names)[colnames(label_names) == "individualCount"] <- "Abundance"
+colnames(label_names)[colnames(label_names) == "occurrenceRemarks"] <- "Comments (Collection Data)"
+colnames(label_names)[colnames(label_names) == "infraspecificEpithet"] <- "Variety1"
+colnames(label_names)[colnames(label_names) == "eventDate"] <- "Date"
+colnames(label_names)[colnames(label_names) == "verbatimDate"] <- "Verbatim Date"
+colnames(label_names)[colnames(label_names) == "dateIdentified"] <- "Ann Date 1"
+colnames(label_names)[colnames(label_names) == "verbatimAnnDate"] <- "Verb Ann Date 1"
+colnames(label_names)[colnames(label_names) == "verbatimAttributes"] <- "Field Characteristics"
+colnames(label_names)[colnames(label_names) == "latLong"] <- "Verbatim Lat/Long"
+colnames(label_names)[colnames(label_names) == "TownshipDirection"] <- "Township Direction"
+colnames(label_names)[colnames(label_names) == "RangeDirection"] <- "Range Direction"
+colnames(label_names)[colnames(label_names) == "SectionPart"] <- "Section Part"
+colnames(label_names)[colnames(label_names) == "X  of Sheets"] <- "# of Sheets"
+colnames(label_names)[colnames(label_names) == "General  nComments"] <- "General \\nComments"
+colnames(label_names)[colnames(label_names) == "Catalog  "] <- "Catalog #"
+colnames(label_names)[colnames(label_names) == "PrepType1"] <- "Prep Type1"
 
 
 ### replacing NA's with blank strings ###
@@ -525,25 +531,25 @@ names(label_names) <- gsub(x = names(label_names), pattern = "\\.", replacement 
 
 
 ### re-naming label columns to be correct for specify ###
-colnames(label_names)[colnames(label_names) == "Collection number"] ="Collection Number"
-colnames(label_names)[colnames(label_names) == "Verbatim Coll  "] ="Verbatim Coll #"
-colnames(label_names)[colnames(label_names) == "Barcode"] ="Bar Code # 1"
-colnames(label_names)[colnames(label_names) == "Accession number"] ="MSC Accession #"
-colnames(label_names)[colnames(label_names) == "Genus"] ="Genus1"
-colnames(label_names)[colnames(label_names) == "Species"] ="Species1"
-colnames(label_names)[colnames(label_names) == "Latitude"] ="Latitude1"
-colnames(label_names)[colnames(label_names) == "Longitude"] ="Longitude1"
-colnames(label_names)[colnames(label_names) == "Verbatim Lat Long"] ="Verbatim Lat/Long"
-colnames(label_names)[colnames(label_names) == "Habitat"] ="Verbatim Habitat"
-colnames(label_names)[colnames(label_names) == "Associated species"] ="Associated Species"
-colnames(label_names)[colnames(label_names) == "Description"] ="Field Characteristics"
-colnames(label_names)[colnames(label_names) == "Date collected"] ="Date"
-colnames(label_names)[colnames(label_names) == "Date determined"] ="Ann Date 1"
-colnames(label_names)[colnames(label_names) == "X  of Sheets"] ="# of Sheets"
-colnames(label_names)[colnames(label_names) == "Catalog  "] ="Catalog #"
-colnames(label_names)[colnames(label_names) == "General  nComments"] ="General \\nComments"
-colnames(label_names)[colnames(label_names) == "infraEpithet"] ="Variety1"
-colnames(label_names)[colnames(label_names) == "Substrate"] ="Soil Type"
+colnames(label_names)[colnames(label_names) == "Collection number"] <- "Collection Number"
+colnames(label_names)[colnames(label_names) == "Verbatim Coll  "] <- "Verbatim Coll #"
+colnames(label_names)[colnames(label_names) == "Barcode"] <- "Bar Code # 1"
+colnames(label_names)[colnames(label_names) == "Accession number"] <- "MSC Accession #"
+colnames(label_names)[colnames(label_names) == "Genus"] <- "Genus1"
+colnames(label_names)[colnames(label_names) == "Species"] <- "Species1"
+colnames(label_names)[colnames(label_names) == "Latitude"] <- "Latitude1"
+colnames(label_names)[colnames(label_names) == "Longitude"] <- "Longitude1"
+colnames(label_names)[colnames(label_names) == "Verbatim Lat Long"] <- "Verbatim Lat/Long"
+colnames(label_names)[colnames(label_names) == "Habitat"] <- "Verbatim Habitat"
+colnames(label_names)[colnames(label_names) == "Associated species"] <- "Associated Species"
+colnames(label_names)[colnames(label_names) == "Description"] <- "Field Characteristics"
+colnames(label_names)[colnames(label_names) == "Date collected"] <- "Date"
+colnames(label_names)[colnames(label_names) == "Date determined"] <- "Ann Date 1"
+colnames(label_names)[colnames(label_names) == "X  of Sheets"] <- "# of Sheets"
+colnames(label_names)[colnames(label_names) == "Catalog  "] <- "Catalog #"
+colnames(label_names)[colnames(label_names) == "General  nComments"] <- "General \\nComments"
+colnames(label_names)[colnames(label_names) == "infraEpithet"] <- "Variety1"
+colnames(label_names)[colnames(label_names) == "Substrate"] <- "Soil Type"
 
 
 ### replacing NA's with blank strings ###
