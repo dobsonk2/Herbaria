@@ -19,69 +19,74 @@ library(tidyverse)
 
 ### Read in data ###
 # download Symbiota data as UTF-8
-# change the name for the label file from "test.csv" to the name of the file you want to re-format
-label <- read_csv("20230706 Symbiota.csv")
-label <- as.data.frame(label)
+# change the name for the sym file from "test.csv" to the name of the file you want to re-format
+sym <- read_csv("unique_symbiota_data.csv")
+sym <- as.data.frame(sym)
 
 
 ### selecting columns from symbiota that specify needs ###
-colnames(label)
-label_col_remove <- label %>%
+colnames(sym)
+sym_col_remove <- sym %>%
   select(any_of(c("occurrenceID","catalogNumber","otherCatalogNumbers","genus","specificEpithet","infraspecificEpithet","identifiedBy","dateIdentified",  
                   "recordedBy","associatedCollectors","recordNumber","eventDate","occurrenceRemarks","habitat","substrate","verbatimAttributes",
                   "associatedTaxa","individualCount","preparations","country","stateProvince","county","locality","decimalLatitude",  
-                  "decimalLongitude","verbatimCoordinates")))
+                  "decimalLongitude","verbatimCoordinates","verbatimEventDate")))
 
 
 ### adding in empty columns that are created during specify processing ###
-label_col_remove$Catalog.. <- NA
-label_col_remove$Initials <- "MTC" # Change this to your initials if you're doing the upload
+sym_col_remove$Catalog.. <- NA
+sym_col_remove$Initials <- "MTC" # Change this to your initials if you're doing the upload
 
 
 ### sheet X of X designation ###
 # if occurrenceRemarks contains "Sheet X of X" or "Box X of X", pull that out and put it in General \nComments instead
-label_col_remove$General..nComments <- str_extract(label_col_remove$occurrenceRemarks, '(\\w+)?\\s?\\d of \\d')
+sym_col_remove$General..nComments <- str_extract(sym_col_remove$occurrenceRemarks, '(\\w+)?\\s?\\d of \\d')
 # then, remove "sheet/box X of X" from occurrence remarks
-label_col_remove$occurrenceRemarks <- str_remove_all(label_col_remove$occurrenceRemarks, '(\\w+)?\\s?\\d of \\d')
+sym_col_remove$occurrenceRemarks <- str_remove_all(sym_col_remove$occurrenceRemarks, '(\\w+)?\\s?\\d of \\d')
 # capitalizing first letter of sheet or box
-label_col_remove$General..nComments <- gsub("^([a-z])", "\\U\\1", label_col_remove$General..nComments, perl=TRUE)
+sym_col_remove$General..nComments <- gsub("^([a-z])", "\\U\\1", sym_col_remove$General..nComments, perl=TRUE)
 # replacing NA's with blank strings
-label_col_remove$General..nComments[is.na(label_col_remove$General..nComments)] <- ""
+sym_col_remove$General..nComments[is.na(sym_col_remove$General..nComments)] <- ""
 # if the comments only contain '# of #", add sheet infront
-label_col_remove$General..nComments <- ifelse(grepl("\\w+ \\d of \\d",label_col_remove$General..nComments),
-                                              label_col_remove$General..nComments,
-                                              paste0("Sheet ",label_col_remove$General..nComments))
+sym_col_remove$General..nComments <- ifelse(grepl("\\w+ \\d of \\d",sym_col_remove$General..nComments),
+                                              sym_col_remove$General..nComments,
+                                              paste0("Sheet ",sym_col_remove$General..nComments))
 # remove blank sheet designations
-label_col_remove$General..nComments[label_col_remove$General..nComments == "Sheet "] <- ""
+sym_col_remove$General..nComments[sym_col_remove$General..nComments == "Sheet "] <- ""
 # removing weird remnant punctuation after removing "sheet/box X of x" from occurrenceRemarks
-label_col_remove$occurrenceRemarks <- str_remove_all(label_col_remove$occurrenceRemarks, '^(\\.\\s)')
-label_col_remove$occurrenceRemarks <- str_remove_all(label_col_remove$occurrenceRemarks, '(\\s\\.)$')
+sym_col_remove$occurrenceRemarks <- str_remove_all(sym_col_remove$occurrenceRemarks, '^(\\.\\s)')
+sym_col_remove$occurrenceRemarks <- str_remove_all(sym_col_remove$occurrenceRemarks, '(\\s\\.)$')
 # check occurrence remarks & notes
-unique(label_col_remove$occurrenceRemarks)
-unique(label_col_remove$General..nComments)
+unique(sym_col_remove$occurrenceRemarks)
+unique(sym_col_remove$General..nComments)
 
 
 ### # of sheets designation ###
 # pull out the final number in "Sheet X of X" and store it in "# of Sheets"
-label_col_remove$X..of.Sheets <- str_extract(label_col_remove$General..nComments, '(?<=of) \\d')
+sym_col_remove$X..of.Sheets <- str_extract(sym_col_remove$General..nComments, '(?<=of) \\d')
 
 
 ### adding preparation type ###
 # replacing NA's with blank strings
-label_col_remove$preparations[is.na(label_col_remove$preparations)] <- ""
+sym_col_remove$preparations[is.na(sym_col_remove$preparations)] <- ""
 # if prep type is blank, input "sheet" - if not, use what was already present in that column
-label_col_remove$PrepType1 <- ifelse(label_col_remove$preparations == "",
+sym_col_remove$PrepType1 <- ifelse(sym_col_remove$preparations == "",
                                      "sheet",
-                                     label_col_remove$preparations)
+                                     sym_col_remove$preparations)
+
+
+### keeping only the first value in otherCatalogNumbers
+sym_col_remove$otherCatalogNumbers <- str_extract(sym_col_remove$otherCatalogNumbers, "[^;]+")
+#sym_col_remove$otherCatalogNumbers <- gsub("Accession Number: (\\d+)", "\\1", sym_col_remove$otherCatalogNumbers)
 
 
 ### extracting coordinate information ###
 # only run these lines about coordinates and TRS if "verbatimCoordinates" column exists
 # separating between decimal degree, TRS, and UTM (code here from James Mickley)
-label_col_remove <- label_col_remove %>%
+sym_col_remove <- sym_col_remove %>%
   mutate(
     latLong = gsub(
-      ".*?;? ?([NSEW]? ?[\\d\\.]+°?[ \\d'\",-NSEW°?]*[NSEW°?'\"])? ?;?.*", # I don't think this part works, but thats okay since we have separate columns for lat and long
+      ".*?;? ?([NSEW]? ?[\\d\\.]+°[ \\d'\",-NSEW°]*[NSEW°'\"])? ?;?.*", # I don't think this part works, but thats okay since we have separate columns for lat and long
       "\\1", verbatimCoordinates, perl = TRUE),
     trs = gsub(
       ".*?;? ?(TRS:[\\w /]*\\w)? ?;?.*", 
@@ -94,86 +99,126 @@ label_col_remove <- label_col_remove %>%
 
 ### parsing out TRS information ###
 # removing "TRS:" from the beginning
-label_col_remove$trs <- str_remove_all(label_col_remove$trs, 'TRS:\\s?')
+sym_col_remove$trs <- str_remove_all(sym_col_remove$trs, 'TRS:\\s?')
 # pulling out township information
-label_col_remove$Township <- str_extract(label_col_remove$trs, 'T\\d\\d?\\w')
-label_col_remove$TownshipDirection <- str_extract(label_col_remove$Township, '\\w$')
-label_col_remove$Township <- str_extract(label_col_remove$Township, '\\d\\d?')
+sym_col_remove$Township <- str_extract(sym_col_remove$trs, 'T\\d\\d?\\w')
+sym_col_remove$TownshipDirection <- str_extract(sym_col_remove$Township, '\\w$')
+sym_col_remove$Township <- str_extract(sym_col_remove$Township, '\\d\\d?')
 # pulling out range information
-label_col_remove$Range <- str_extract(label_col_remove$trs, 'R\\d\\d?\\w')
-label_col_remove$RangeDirection <- str_extract(label_col_remove$Range, '\\w$')
-label_col_remove$Range <- str_extract(label_col_remove$Range, '\\d\\d?')
+sym_col_remove$Range <- str_extract(sym_col_remove$trs, 'R\\d\\d?\\w')
+sym_col_remove$RangeDirection <- str_extract(sym_col_remove$Range, '\\w$')
+sym_col_remove$Range <- str_extract(sym_col_remove$Range, '\\d\\d?')
 # pulling out section information
-label_col_remove$Section <- str_extract(label_col_remove$trs, '[Ss]\\w?\\w?\\s?\\d\\d?')
-label_col_remove$Section <- str_extract(label_col_remove$Section, '\\d\\d?')
+sym_col_remove$Section <- str_extract(sym_col_remove$trs, '[Ss]\\w?\\w?\\s?\\d\\d?')
+sym_col_remove$Section <- str_extract(sym_col_remove$Section, '\\d\\d?')
 # pulling out section part
-label_col_remove$SectionPart <- str_extract(label_col_remove$trs, '[:upper:][:upper:].*')
+sym_col_remove$SectionPart <- str_extract(sym_col_remove$trs, '[:upper:][:upper:].*')
 
 
 ### removing extra coordinate columns we don't need now
-label_col_remove = subset(label_col_remove, select = -c(verbatimCoordinates,trs,utm))
+sym_col_remove = subset(sym_col_remove, select = -c(verbatimCoordinates,trs,utm))
 
 
 ### if determiner column is empty, make the first collector the determiner ###
 # replacing NA's with blank strings
-label_col_remove$identifiedBy[is.na(label_col_remove$identifiedBy)] <- ""
+sym_col_remove$identifiedBy[is.na(sym_col_remove$identifiedBy)] <- ""
 # moving names over
-label_col_remove$identifiedBy <- ifelse(label_col_remove$identifiedBy == "",
-                                        label_col_remove$recordedBy,
-                                        label_col_remove$identifiedBy)
+sym_col_remove$identifiedBy <- ifelse(sym_col_remove$identifiedBy == "",
+                                        sym_col_remove$recordedBy,
+                                        sym_col_remove$identifiedBy)
 
 
-### checking name formats ###
-# removing spaces after names
-label_col_remove$recordedBy <- gsub("\\s$","",label_col_remove$recordedBy)
-label_col_remove$identifiedBy <- gsub("\\s$","",label_col_remove$identifiedBy)
-label_col_remove$associatedCollectors <- gsub("\\s$","",label_col_remove$associatedCollectors)
-# checking names present in the dataframe
-unique(label_col_remove$recordedBy)
-unique(label_col_remove$identifiedBy)
-unique(label_col_remove$associatedCollectors)
-# fixing names in the wrong format - only need to run the lines below if things are formatted incorrectly
-# any names written as "Last name, First name" will need corrected
-# note: if multiple names are within "recordedBy", its probably easiest to separate this into "recordedBy" and "associatedCollectors"
-# in the raw csv before reading it into R. 
-# the incorrect format goes first, followed by the correct format
-label_col_remove$recordedBy[label_col_remove$recordedBy == "Turpin, BC"] <- "B.C. Turpin"
-label_col_remove$identifiedBy[label_col_remove$identifiedBy == "Burrows, JE"] <- "J.E. Burrows"
-label_col_remove$associatedCollectors[label_col_remove$associatedCollectors == "Burrows, JE and Marks, RA"] <- "J.E. Burrows and R.A. Marks"
+### removing spaces after names ###
+sym_col_remove$recordedBy <- gsub("\\s$","",sym_col_remove$recordedBy)
+sym_col_remove$identifiedBy <- gsub("\\s$","",sym_col_remove$identifiedBy)
+sym_col_remove$associatedCollectors <- gsub("\\s$","",sym_col_remove$associatedCollectors)
 
 
 ### splitting recorded column into first, last, and middle names ###
-label_names <- label_col_remove %>%
-  extract(recordedBy,
+# removing the comma between a last name and Jr, Sr, II, or III
+sym_col_remove <- sym_col_remove %>%
+  mutate(recordedBy=str_replace_all(recordedBy,"\\, Jr\\.?"," Jr.")) %>%
+  mutate(recordedBy=str_replace_all(recordedBy,"\\, Sr\\.?"," Sr.")) %>%
+  mutate(recordedBy=str_replace_all(recordedBy,"\\, II\\.?"," II")) %>%
+  mutate(recordedBy=str_replace_all(recordedBy,"\\, III\\.?"," III"))
+# if multiple names are separated by commas, replace the comma with "and"
+sym_col_remove$recordedBy <- ifelse((str_detect(sym_col_remove$recordedBy, "[A-Za-zÀ-ȕ]+\\.?\\s[A-Za-zÀ-ȕ]+\\.?\\,\\s?(?!and)")) == TRUE,
+                   str_replace_all(sym_col_remove$recordedBy,"\\,\\s?(?!and)"," and "),
+                   sym_col_remove$recordedBy)
+# splitting the first collector name into first, middle, and last
+# this might output a warning message that missing pieces are filled with NA - this is okay, it will happen if there aren't two or more collectors listed
+sym_names <- sym_col_remove %>%
+  mutate(recordedBy= gsub(pattern = "(\\w+\\,) (\\w+)","\\2 \\1", recordedBy)) %>% # fixing "Last name, First name" to be "First name Last name"
+  mutate(recordedBy=str_replace_all(recordedBy,"\\s?\\;\\s?(?!and)"," and ")) %>% # this replaces any ";" separators with "and"
+  mutate(recordedBy=str_replace_all(recordedBy," or "," and ")) %>% # this replaces any "or" separators with "and"
+  mutate(recordedBy=str_replace_all(recordedBy," with "," and ")) %>% # this replaces any "with" separators with "and"
+  mutate(recordedBy=str_replace_all(recordedBy," de la "," dela")) %>% # making sure "de la" doesn't get separated into separate names
+  mutate(recordedBy=str_replace_all(recordedBy," de "," de")) %>% # making sure "de" doesn't get separated into a separate name
+  separate(col = recordedBy, into = c("first_collect", "additional_collect"), sep = " and ", extra = "merge") %>%
+  extract(first_collect,
           into = c("Collector.First.Name1", "Collector.Middle1", "Collector.Last.Name1"),
-          regex = "([A-Za-zÀ-ȕ]+\\.?)\\s*(?:([^\\s,]+)\\s)?(?:([A-Za-zÀ-ȕ]+(?:,\\sJr\\.)?))?")
+          regex = "([A-Za-zÀ-ȕ]+\\.?)\\s*(?:([^\\s,]+)\\s)?(?:([A-Za-zÀ-ȕ]+(?:,\\sJr\\.)?))?") %>%
+  mutate(Collector.Last.Name1 = gsub(pattern = "(de)(la)([A-Za-zÀ-ȕ]+)", "\\1 \\2 \\3", Collector.Last.Name1)) %>%
+  mutate(Collector.Last.Name1 = gsub(pattern = "(de)([A-Za-zÀ-ȕ]+)", "\\1 \\2", Collector.Last.Name1))
+# pasting in extra names as additional collectors
+sym_names$additional_collect[is.na(sym_names$additional_collect)] <- ""
+sym_names$associatedCollectors <- ifelse(sym_names$additional_collect == "",
+                                         sym_names$associatedCollectors,
+                                         sym_names$additional_collect)
+sym_names = subset(sym_names, select = -c(additional_collect))
 
 
 ### splitting identifier column into first, last, and middle names ###
 # we're only choosing the first name listed for determiner because "determiner 2" means a different determination was made by someone, not an associated determiner
-label_names <- label_names %>%
-  mutate(identifiedBy=str_replace_all(identifiedBy,"\\, Jr\\.?"," Jr.")) %>% # this removes the comma before "Jr." so the next line of code works
-  mutate(identifiedBy=str_replace_all(identifiedBy,"\\,\\s(?!and)"," and ")) %>% # this replaces any ", " with " and "
-  mutate(identifiedBy=str_replace_all(identifiedBy,"\\, and "," and ")) %>% # this replaces any ", and " with " and "
-  mutate(identifiedBy=str_replace_all(identifiedBy," with "," and ")) %>% # this replaces any " with " with " and "
-  mutate(identifiedBy=str_replace_all(identifiedBy,"; "," and ")) %>% # this replaces any "; " with " and "
-  separate(col = identifiedBy, into = c("first_det", "second_det"), sep = " and ") %>%
-  extract(first_det,
+# removing the comma between a last name and Jr, Sr, II, or III
+sym_names <- sym_names %>%
+  mutate(identifiedBy=str_replace_all(identifiedBy,"\\, Jr\\.?"," Jr.")) %>%
+  mutate(identifiedBy=str_replace_all(identifiedBy,"\\, Sr\\.?"," Sr.")) %>%
+  mutate(identifiedBy=str_replace_all(identifiedBy,"\\, II\\.?"," II")) %>%
+  mutate(identifiedBy=str_replace_all(identifiedBy,"\\, III\\.?"," III"))
+# if multiple names are separated by commas, replace the comma with "and"
+sym_names$identifiedBy <- ifelse((str_detect(sym_names$identifiedBy, "[A-Za-zÀ-ȕ]+\\.?\\s[A-Za-zÀ-ȕ]+\\.?\\,\\s?(?!and)")) == TRUE,
+                                    str_replace_all(sym_names$identifiedBy,"\\,\\s?(?!and)"," and "),
+                                    sym_names$identifiedBy)
+# splitting the first collector name into first, middle, and last
+# this might output a warning message that missing pieces are filled with NA - this is okay, it will happen if there aren't two or more determiners listed
+sym_names <- sym_names %>%
+  mutate(identifiedBy= gsub(pattern = "(\\w+\\,) (\\w+)","\\2 \\1", identifiedBy)) %>% # fixing "Last name, First name" to be "First name Last name"
+  mutate(identifiedBy=str_replace_all(identifiedBy,"\\s?\\;\\s?(?!and)"," and ")) %>% # this replaces any ";" separators with "and"
+  mutate(identifiedBy=str_replace_all(identifiedBy," or "," and ")) %>% # this replaces any "or" separators with "and"
+  mutate(identifiedBy=str_replace_all(identifiedBy," with "," and ")) %>% # this replaces any "with" separators with "and"
+  mutate(identifiedBy=str_replace_all(identifiedBy," de la "," dela")) %>% # making sure "de la" doesn't get separated into separate names
+  mutate(identifiedBy=str_replace_all(identifiedBy," de "," de")) %>% # making sure "de" doesn't get separated into a separate name
+  separate(col = identifiedBy, into = c("first_ID", "additional_ID"), sep = " and ", extra = "merge") %>%
+  extract(first_ID,
           into = c("Determiner.First.Name1", "Determiner.Middle1", "Determiner.Last.Name1"),
-          regex = "([A-Za-zÀ-ȕ]+\\.?)\\s*(?:([^\\s,]+)\\s)?(?:([A-Za-zÀ-ȕ]+(?:,\\sJr\\.)?))?")
-# removing extra second_det column we don't need now
-label_names = subset(label_names, select = -c(second_det))
+          regex = "([A-Za-zÀ-ȕ]+\\.?)\\s*(?:([^\\s,]+)\\s)?(?:([A-Za-zÀ-ȕ]+(?:,\\sJr\\.)?))?") %>%
+  mutate(Determiner.Last.Name1 = gsub(pattern = "(de)(la)([A-Za-zÀ-ȕ]+)", "\\1 \\2 \\3", Determiner.Last.Name1)) %>%
+  mutate(Determiner.Last.Name1 = gsub(pattern = "(de)([A-Za-zÀ-ȕ]+)", "\\1 \\2", Determiner.Last.Name1))
+# removing additional determiners since we don't need them
+sym_names = subset(sym_names, select = -c(additional_ID))
 
 
 ### splitting additional collectors into their names ###
-# this might output a warning message that missing pieces are filled with NA - this is okay, it will happen if two or more associated collectors
-# aren't present for every record (likely there will not be 2 or more for every record)
-label_names <- label_names %>%  
-  mutate(associatedCollectors=str_replace_all(associatedCollectors,"\\, Jr\\.?"," Jr.")) %>% # this removes the comma before "Jr." so the next line of code works
-  mutate(associatedCollectors=str_replace_all(associatedCollectors,"\\,\\s(?!and)"," and ")) %>% # this replaces any ", " separators with " and "
-  mutate(associatedCollectors=str_replace_all(associatedCollectors,"\\, and "," and ")) %>% # this replaces and ", and " with " and "
-  mutate(associatedCollectors=str_replace_all(associatedCollectors," with "," and ")) %>% # this replaces any " with " with " and "
-  mutate(associatedCollectors=str_replace_all(associatedCollectors,"; "," and ")) %>% # this replaces any "; " with " and "
+# removing the comma between a last name and Jr, Sr, II, or III
+sym_names <- sym_names %>%
+  mutate(associatedCollectors=str_replace_all(associatedCollectors,"\\, Jr\\.?"," Jr.")) %>%
+  mutate(associatedCollectors=str_replace_all(associatedCollectors,"\\, Sr\\.?"," Sr.")) %>%
+  mutate(associatedCollectors=str_replace_all(associatedCollectors,"\\, II\\.?"," II")) %>%
+  mutate(associatedCollectors=str_replace_all(associatedCollectors,"\\, III\\.?"," III"))
+# if multiple names are separated by commas, replace the comma with "and"
+sym_names$associatedCollectors <- ifelse((str_detect(sym_names$associatedCollectors, "[A-Za-zÀ-ȕ]+\\.?\\s[A-Za-zÀ-ȕ]+\\.?\\,\\s?(?!and)")) == TRUE,
+                                 str_replace_all(sym_names$associatedCollectors,"\\,\\s?(?!and)"," and "),
+                                 sym_names$associatedCollectors)
+# splitting the first collector name into first, middle, and last
+# this might output a warning message that missing pieces are filled with NA - this is okay, it will happen if there aren't two or more determiners listed
+sym_names <- sym_names %>%
+  mutate(associatedCollectors= gsub(pattern = "(\\w+\\,) (\\w+)","\\2 \\1", associatedCollectors)) %>% # fixing "Last name, First name" to be "First name Last name"
+  mutate(associatedCollectors=str_replace_all(associatedCollectors,"\\s?\\;\\s?(?!and)"," and ")) %>% # this replaces any ";" separators with "and"
+  mutate(associatedCollectors=str_replace_all(associatedCollectors," or "," and ")) %>% # this replaces any "or" separators with "and"
+  mutate(associatedCollectors=str_replace_all(associatedCollectors," with "," and ")) %>% # this replaces any "with" separators with "and"
+  mutate(associatedCollectors=str_replace_all(associatedCollectors," de la "," dela")) %>% # making sure "de la" doesn't get separated into separate names
+  mutate(associatedCollectors=str_replace_all(associatedCollectors," de "," de")) %>% # making sure "de" doesn't get separated into a separate name
   separate(col = associatedCollectors, into = c("second", "third", "fourth" ,"fifth","sixth","seventh"), sep = " and ") %>%
   extract(second,
           into = c("Collector.First.Name2", "Collector.Middle2", "Collector.Last.Name2"),
@@ -192,61 +237,73 @@ label_names <- label_names %>%
           regex = "([A-Za-zÀ-ȕ]+\\.?)\\s*(?:([^\\s,]+)\\s)?(?:([A-Za-zÀ-ȕ]+(?:,\\sJr\\.)?))?") %>%
   extract(seventh,
           into = c("Collector.First.Name7", "Collector.Middle7", "Collector.Last.Name7"),
-          regex = "([A-Za-zÀ-ȕ]+\\.?)\\s*(?:([^\\s,]+)\\s)?(?:([A-Za-zÀ-ȕ]+(?:,\\sJr\\.)?))?")
-
-
+          regex = "([A-Za-zÀ-ȕ]+\\.?)\\s*(?:([^\\s,]+)\\s)?(?:([A-Za-zÀ-ȕ]+(?:,\\sJr\\.)?))?") %>%
+  mutate(Collector.Last.Name2 = gsub(pattern = "(de)(la)([A-Za-zÀ-ȕ]+)", "\\1 \\2 \\3", Collector.Last.Name2)) %>%
+  mutate(Collector.Last.Name2 = gsub(pattern = "(de)([A-Za-zÀ-ȕ]+)", "\\1 \\2", Collector.Last.Name2)) %>%
+  mutate(Collector.Last.Name3 = gsub(pattern = "(de)(la)([A-Za-zÀ-ȕ]+)", "\\1 \\2 \\3", Collector.Last.Name3)) %>%
+  mutate(Collector.Last.Name3 = gsub(pattern = "(de)([A-Za-zÀ-ȕ]+)", "\\1 \\2", Collector.Last.Name3)) %>%
+  mutate(Collector.Last.Name4 = gsub(pattern = "(de)(la)([A-Za-zÀ-ȕ]+)", "\\1 \\2 \\3", Collector.Last.Name4)) %>%
+  mutate(Collector.Last.Name4 = gsub(pattern = "(de)([A-Za-zÀ-ȕ]+)", "\\1 \\2", Collector.Last.Name4)) %>%
+  mutate(Collector.Last.Name5 = gsub(pattern = "(de)(la)([A-Za-zÀ-ȕ]+)", "\\1 \\2 \\3", Collector.Last.Name5)) %>%
+  mutate(Collector.Last.Name5 = gsub(pattern = "(de)([A-Za-zÀ-ȕ]+)", "\\1 \\2", Collector.Last.Name5)) %>%
+  mutate(Collector.Last.Name6 = gsub(pattern = "(de)(la)([A-Za-zÀ-ȕ]+)", "\\1 \\2 \\3", Collector.Last.Name6)) %>%
+  mutate(Collector.Last.Name6 = gsub(pattern = "(de)([A-Za-zÀ-ȕ]+)", "\\1 \\2", Collector.Last.Name6)) %>%
+  mutate(Collector.Last.Name7 = gsub(pattern = "(de)(la)([A-Za-zÀ-ȕ]+)", "\\1 \\2 \\3", Collector.Last.Name7)) %>%
+  mutate(Collector.Last.Name7 = gsub(pattern = "(de)([A-Za-zÀ-ȕ]+)", "\\1 \\2", Collector.Last.Name7))
+  
+  
 ### making columns that have duplicate info in specify
-label_names$verbatimCollNum <- label_names$recordNumber
-label_names$verbatimDate <- label_names$eventDate
-label_names$verbatimAnnDate <- label_names$dateIdentified
-label_names$BarCode <- label_names$catalogNumber
+sym_names$verbatimCollNum <- sym_names$recordNumber
+sym_names$verbatimDate <- sym_names$verbatimEventDate
+sym_names$verbatimAnnDate <- sym_names$dateIdentified
+sym_names$BarCode <- sym_names$catalogNumber
 
 
 ### replace periods in column names with spaces ###
-names(label_names) <- gsub(x = names(label_names), pattern = "\\.", replacement = " ")
+names(sym_names) <- gsub(x = names(sym_names), pattern = "\\.", replacement = " ")
 
 
-### re-naming label columns to be correct for specify ###
-colnames(label_names)[colnames(label_names) == "occurrenceID"] <- "GUID"
-colnames(label_names)[colnames(label_names) == "recordNumber"] <- "Collection Number"
-colnames(label_names)[colnames(label_names) == "verbatimCollNum"] <- "Verbatim Coll #"
-colnames(label_names)[colnames(label_names) == "otherCatalogNumbers"] <- "MSC Accession #"
-colnames(label_names)[colnames(label_names) == "catalogNumber"] <- "Bar Code # 1"
-colnames(label_names)[colnames(label_names) == "BarCode"] <- "Duplicate BarCode"
-colnames(label_names)[colnames(label_names) == "genus"] <- "Genus1"
-colnames(label_names)[colnames(label_names) == "specificEpithet"] <- "Species1"
-colnames(label_names)[colnames(label_names) == "country"] <- "Country"
-colnames(label_names)[colnames(label_names) == "stateProvince"] <- "State"
-colnames(label_names)[colnames(label_names) == "county"] <- "County"
-colnames(label_names)[colnames(label_names) == "substrate"] <- "Soil Type"
-colnames(label_names)[colnames(label_names) == "locality"] <- "Locality"
-colnames(label_names)[colnames(label_names) == "decimalLatitude"] <- "Latitude1"
-colnames(label_names)[colnames(label_names) == "decimalLongitude"] <- "Longitude1"
-colnames(label_names)[colnames(label_names) == "habitat"] <- "Verbatim Habitat"
-colnames(label_names)[colnames(label_names) == "associatedTaxa"] <- "Associated Species"
-colnames(label_names)[colnames(label_names) == "individualCount"] <- "Abundance"
-colnames(label_names)[colnames(label_names) == "occurrenceRemarks"] <- "Comments (Collection Data)"
-colnames(label_names)[colnames(label_names) == "infraspecificEpithet"] <- "Variety1"
-colnames(label_names)[colnames(label_names) == "eventDate"] <- "Date"
-colnames(label_names)[colnames(label_names) == "verbatimDate"] <- "Verbatim Date"
-colnames(label_names)[colnames(label_names) == "dateIdentified"] <- "Ann Date 1"
-colnames(label_names)[colnames(label_names) == "verbatimAnnDate"] <- "Verb Ann Date 1"
-colnames(label_names)[colnames(label_names) == "verbatimAttributes"] <- "Field Characteristics"
-colnames(label_names)[colnames(label_names) == "latLong"] <- "Verbatim Lat/Long"
-colnames(label_names)[colnames(label_names) == "TownshipDirection"] <- "Township Direction"
-colnames(label_names)[colnames(label_names) == "RangeDirection"] <- "Range Direction"
-colnames(label_names)[colnames(label_names) == "SectionPart"] <- "Section Part"
-colnames(label_names)[colnames(label_names) == "X  of Sheets"] <- "# of Sheets"
-colnames(label_names)[colnames(label_names) == "General  nComments"] <- "General \\nComments"
-colnames(label_names)[colnames(label_names) == "Catalog  "] <- "Catalog #"
-colnames(label_names)[colnames(label_names) == "PrepType1"] <- "Prep Type1"
+### re-naming sym columns to be correct for specify ###
+colnames(sym_names)[colnames(sym_names) == "occurrenceID"] <- "GUID"
+colnames(sym_names)[colnames(sym_names) == "recordNumber"] <- "Collection Number"
+colnames(sym_names)[colnames(sym_names) == "verbatimCollNum"] <- "Verbatim Coll #"
+colnames(sym_names)[colnames(sym_names) == "otherCatalogNumbers"] <- "MSC Accession #"
+colnames(sym_names)[colnames(sym_names) == "catalogNumber"] <- "Bar Code # 1"
+colnames(sym_names)[colnames(sym_names) == "BarCode"] <- "Duplicate BarCode"
+colnames(sym_names)[colnames(sym_names) == "genus"] <- "Genus1"
+colnames(sym_names)[colnames(sym_names) == "specificEpithet"] <- "Species1"
+colnames(sym_names)[colnames(sym_names) == "country"] <- "Country"
+colnames(sym_names)[colnames(sym_names) == "stateProvince"] <- "State"
+colnames(sym_names)[colnames(sym_names) == "county"] <- "County"
+colnames(sym_names)[colnames(sym_names) == "substrate"] <- "Soil Type"
+colnames(sym_names)[colnames(sym_names) == "locality"] <- "Locality"
+colnames(sym_names)[colnames(sym_names) == "decimalLatitude"] <- "Latitude1"
+colnames(sym_names)[colnames(sym_names) == "decimalLongitude"] <- "Longitude1"
+colnames(sym_names)[colnames(sym_names) == "habitat"] <- "Verbatim Habitat"
+colnames(sym_names)[colnames(sym_names) == "associatedTaxa"] <- "Associated Species"
+colnames(sym_names)[colnames(sym_names) == "individualCount"] <- "Abundance"
+colnames(sym_names)[colnames(sym_names) == "occurrenceRemarks"] <- "Comments (Collection Data)"
+colnames(sym_names)[colnames(sym_names) == "infraspecificEpithet"] <- "Variety1"
+colnames(sym_names)[colnames(sym_names) == "eventDate"] <- "Date"
+colnames(sym_names)[colnames(sym_names) == "verbatimDate"] <- "Verbatim Date"
+colnames(sym_names)[colnames(sym_names) == "dateIdentified"] <- "Ann Date 1"
+colnames(sym_names)[colnames(sym_names) == "verbatimAnnDate"] <- "Verb Ann Date 1"
+colnames(sym_names)[colnames(sym_names) == "verbatimAttributes"] <- "Field Characteristics"
+colnames(sym_names)[colnames(sym_names) == "latLong"] <- "Verbatim Lat/Long"
+colnames(sym_names)[colnames(sym_names) == "TownshipDirection"] <- "Township Direction"
+colnames(sym_names)[colnames(sym_names) == "RangeDirection"] <- "Range Direction"
+colnames(sym_names)[colnames(sym_names) == "SectionPart"] <- "Section Part"
+colnames(sym_names)[colnames(sym_names) == "X  of Sheets"] <- "# of Sheets"
+colnames(sym_names)[colnames(sym_names) == "General  nComments"] <- "General \\nComments"
+colnames(sym_names)[colnames(sym_names) == "Catalog  "] <- "Catalog #"
+colnames(sym_names)[colnames(sym_names) == "PrepType1"] <- "Prep Type1"
 
 
 ### replacing NA's with blank strings ###
-label_names[is.na(label_names)] <- ""
+sym_names[is.na(sym_names)] <- ""
 
 
 ### save output as a csv file ###
-# can change "label_to_specify" to whatever name you want the new file to be named
-write.csv(label_names, "sym_to_spec_test1.csv", row.names=F, fileEncoding = "UTF-8")
+# can change "sym_to_specify" to whatever name you want the new file to be named
+write.csv(sym_names, "sym_to_spec_test1.csv", row.names=F, fileEncoding = "UTF-8")
 
