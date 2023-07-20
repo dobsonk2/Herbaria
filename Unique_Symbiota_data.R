@@ -18,10 +18,10 @@ library(tidyverse)
 
 ### Read in data ###
 # download Symbiota data and Specify barcodes as UTF-8
-# change the name for the label file from "test.csv" to the name of the file you want to re-format
+# change the name for the symbiota data file to match the name of the file you downloaded from Symbiota
 sym <- read_csv("20230706 Symbiota.csv")
 sym <- as.data.frame(sym)
-spec <- read_csv("All Specify barcodes.csv")
+spec <- read_csv("updated_specify_barcodes.csv")
 spec <- as.data.frame(spec)
 
 

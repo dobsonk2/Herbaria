@@ -72,7 +72,6 @@ label_col_remove$General..nComments <- sub('^\\.\\s', '', label_col_remove$Gener
 label_col_remove$General..nComments <- ifelse(label_col_remove$General..nComments == "",
                                               label_col_remove$General..nComments,
                                               paste0(label_col_remove$General..nComments,"."))
-
 # just a check to see how the general comments column outputs look
 unique(label_col_remove$General..nComments)
 
