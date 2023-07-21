@@ -13,6 +13,7 @@ setwd("~/Documents/research/Herbarium") # set to wherever files are stored
 
 # Load packages
 library(tidyverse)
+library(readr)
 
 
 
@@ -21,7 +22,7 @@ library(tidyverse)
 # change the name for the symbiota data file to match the name of the file you downloaded from Symbiota
 sym <- read_csv("20230706 Symbiota.csv")
 sym <- as.data.frame(sym)
-spec <- read_csv("updated_specify_barcodes.csv")
+spec <- read_csv("All Specify barcodes.csv")
 spec <- as.data.frame(spec)
 
 
@@ -45,5 +46,9 @@ sym2[is.na(sym2)] <- ""
 
 ### save outputs as csv files ###
 # can change "name.csv" to whatever name you want the new file to be named
-write.csv(sym2, "unique_symbiota_data.csv", row.names=F, fileEncoding = "UTF-8")
+Encoding(sym2$identifiedBy) = "latin1"
+Encoding(sym2$recordedBy) = "latin1"
+Encoding(sym2$associatedCollectors) = "latin1"
+Encoding(sym2$scientificNameAuthorship) = "latin1"
+write_excel_csv(sym2, file="unique_symbiota_data.csv")
 write.csv(spec2, "updated_Specify_barcodes.csv", row.names=F, fileEncoding = "UTF-8")
