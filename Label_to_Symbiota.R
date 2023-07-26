@@ -48,7 +48,7 @@ label2 <- label %>%
 ### selecting columns from label template that symbiota needs ###
 colnames(label2)
 label_col_remove <- label2 %>%
-  select(any_of(c("Collection.number","Barcode","Accession.number","Cultivated","Family","Genus","Species","State",             
+  select(any_of(c("Collection.number","Barcode","Accession.number","Cultivated","Genus","Species","State",             
                   "County","Locality","Latitude","Longitude","Habitat","Associated.species","Abundance","Description",        
                   "Additional.notes","Primary.collector","Additional.collectors","Date.collected","Determiner","Date.determined",
                   "iNat.URL","Infrarank","infraEpithet","Substrate")))
@@ -64,7 +64,6 @@ colnames(label_col_remove)[colnames(label_col_remove) == "Collection.number"] <-
 colnames(label_col_remove)[colnames(label_col_remove) == "Barcode"] <- "catalogNumber"
 colnames(label_col_remove)[colnames(label_col_remove) == "Accession.number"] <- "otherCatalogNumbers"
 colnames(label_col_remove)[colnames(label_col_remove) == "Cultivated"] <- "cultivationStatus"
-colnames(label_col_remove)[colnames(label_col_remove) == "Family"] <- "family"
 colnames(label_col_remove)[colnames(label_col_remove) == "Genus"] <- "genus"
 colnames(label_col_remove)[colnames(label_col_remove) == "Species"] <- "specificEpithet"
 colnames(label_col_remove)[colnames(label_col_remove) == "State"] <- "state"
@@ -131,7 +130,10 @@ label_col_remove2[is.na(label_col_remove2)] <- ""
 
 
 ### save output as a csv file ###
-# can change "test1" to whatever name you want the new file to be named
+# fixing encoding of columns
+Encoding(label_col_remove2$identifiedBy) = "latin1"
+Encoding(label_col_remove2$recordedBy) = "latin1"
+Encoding(label_col_remove2$associatedCollectors) = "latin1"
+# can change "test" to whatever name you want the new file to be named
 # when working with specific kingdoms, be sure to differentiate the names here
-write.csv(label_col_remove2, "test3_plants.csv", row.names=F, fileEncoding = "UTF-8")
-
+write_excel_csv(label_col_remove2, file="test_plants.csv")
