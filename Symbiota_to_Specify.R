@@ -175,6 +175,10 @@ sym_col_remove <- sym_col_remove %>%
 sym_col_remove$recordedBy <- ifelse((str_detect(sym_col_remove$recordedBy, "[A-Za-zÀ-ȕ]+\\.?\\s[A-Za-zÀ-ȕ]+\\.?\\,\\s?(?!and)")) == TRUE,
                    str_replace_all(sym_col_remove$recordedBy,"\\,\\s?(?!and)"," and "),
                    sym_col_remove$recordedBy)
+# replace any "et al" with nothing
+sym_col_remove$recordedBy <- ifelse((str_detect(sym_col_remove$recordedBy, "et al\\.?")) == TRUE,
+                                    str_replace_all(sym_col_remove$recordedBy,"et al\\.?",""),
+                                    sym_col_remove$recordedBy)
 # splitting the first collector name into first, middle, and last
 # this might output a warning message that missing pieces are filled with NA - this is okay, it will happen if there aren't two or more collectors listed
 sym_names <- sym_col_remove %>%
@@ -190,7 +194,7 @@ sym_names <- sym_col_remove %>%
   separate(col = recordedBy, into = c("first_collect", "additional_collect"), sep = " and ", extra = "merge") %>%
   extract(first_collect,
           into = c("Collector.First.Name1", "Collector.Middle1", "Collector.Last.Name1"),
-          regex = "([A-Za-zÀ-ȕ]+\\.?)\\s*(?:([^\\s,]+)\\s)?(?:([A-Za-zÀ-ȕ]+(?:\\sJr\\.)?))?") %>%
+          regex = "([A-Za-zÀ-ȕ]+\\.?(?:\\-[A-Za-zÀ-ȕ]+)?)\\s*(?:([^\\s,]+)\\s)?(?:([A-Za-zÀ-ȕ]+(?:\\sJr\\.)?))?") %>%
   mutate(Collector.Last.Name1 = gsub(pattern = "^(de)(la)([A-Za-zÀ-ȕ]+)", "\\1 \\2 \\3", Collector.Last.Name1)) %>%
   mutate(Collector.Last.Name1 = gsub(pattern = "^(de)([A-Za-zÀ-ȕ]+)", "\\1 \\2", Collector.Last.Name1)) %>%
   mutate(Collector.Last.Name1 = gsub(pattern = "^(du)([A-Za-zÀ-ȕ]+)", "\\1 \\2", Collector.Last.Name1)) %>%
@@ -227,10 +231,13 @@ sym_names <- sym_names %>%
   mutate(identifiedBy=str_replace_all(identifiedBy," [Dd]e "," de")) %>% # making sure "de" doesn't get separated into a separate name
   mutate(identifiedBy=str_replace_all(identifiedBy," [Dd]u "," du")) %>% # making sure "du" doesn't get separated into a separate name
   mutate(identifiedBy=str_replace_all(identifiedBy," [Vv]on "," von")) %>% # making sure "von" doesn't get separated into a separate name
+  mutate(identifiedBy=str_replace_all(identifiedBy,"[Nn]omenclatur[A-Za-z]+ [Uu]pdate","NomenclatureUpdate")) %>% # making sure 'nomenclature update' doesn't get split into first and last name
+  mutate(identifiedBy=str_replace_all(identifiedBy,"[Nn]omenclatur[A-Za-z]+ [Aa]djustment","NomenclatureUpdate")) %>% # making sure 'nomenclature adjustment' doesn't get split into first and last name
+  mutate(identifiedBy=str_replace_all(identifiedBy,"[Nn]om. [Rr]ev","NomenclatureUpdate")) %>% # making sure 'nom. rev' doesn't get split into first and last name
   separate(col = identifiedBy, into = c("first_ID", "additional_ID"), sep = " and ", extra = "merge") %>%
   extract(first_ID,
           into = c("Determiner.First.Name1", "Determiner.Middle1", "Determiner.Last.Name1"),
-          regex = "([A-Za-zÀ-ȕ]+\\.?)\\s*(?:([^\\s,]+)\\s)?(?:([A-Za-zÀ-ȕ]+(?:\\sJr\\.)?))?") %>%
+          regex = "([A-Za-zÀ-ȕ]+\\.?(?:\\-[A-Za-zÀ-ȕ]+)?)\\s*(?:([^\\s,]+)\\s)?(?:([A-Za-zÀ-ȕ]+(?:\\sJr\\.)?))?") %>%
   mutate(Determiner.Last.Name1 = gsub(pattern = "^(de)(la)([A-Za-zÀ-ȕ]+)", "\\1 \\2 \\3", Determiner.Last.Name1)) %>%
   mutate(Determiner.Last.Name1 = gsub(pattern = "^(de)([A-Za-zÀ-ȕ]+)", "\\1 \\2", Determiner.Last.Name1)) %>%
   mutate(Determiner.Last.Name1 = gsub(pattern = "^(du)([A-Za-zÀ-ȕ]+)", "\\1 \\2", Determiner.Last.Name1)) %>%
@@ -250,6 +257,9 @@ sym_names <- sym_names %>%
 sym_names$associatedCollectors <- ifelse((str_detect(sym_names$associatedCollectors, "[A-Za-zÀ-ȕ]+\\.?\\s[A-Za-zÀ-ȕ]+\\.?\\,\\s?(?!and)")) == TRUE,
                                  str_replace_all(sym_names$associatedCollectors,"\\,\\s?(?!and)"," and "),
                                  sym_names$associatedCollectors)
+sym_names$associatedCollectors <- ifelse((str_detect(sym_names$associatedCollectors, "et al\\.?")) == TRUE,
+                                              str_replace_all(sym_names$associatedCollectors,"\\;?\\s?et al\\.?",""),
+                                              sym_names$associatedCollectors)
 # splitting the first collector name into first, middle, and last
 # this might output a warning message that missing pieces are filled with NA - this is okay, it will happen if there aren't two or more determiners listed
 sym_names <- sym_names %>%
@@ -265,22 +275,22 @@ sym_names <- sym_names %>%
   separate(col = associatedCollectors, into = c("second", "third", "fourth" ,"fifth","sixth","seventh"), sep = " and ") %>%
   extract(second,
           into = c("Collector.First.Name2", "Collector.Middle2", "Collector.Last.Name2"),
-          regex = "([A-Za-zÀ-ȕ]+\\.?)\\s*(?:([^\\s,]+)\\s)?(?:([A-Za-zÀ-ȕ]+(?:\\sJr\\.)?))?") %>%
+          regex = "([A-Za-zÀ-ȕ]+\\.?(?:\\-[A-Za-zÀ-ȕ]+)?)\\s*(?:([^\\s,]+)\\s)?(?:([A-Za-zÀ-ȕ]+(?:\\sJr\\.)?))?") %>%
   extract(third,
           into = c("Collector.First.Name3", "Collector.Middle3", "Collector.Last.Name3"),
-          regex = "([A-Za-zÀ-ȕ]+\\.?)\\s*(?:([^\\s,]+)\\s)?(?:([A-Za-zÀ-ȕ]+(?:\\sJr\\.)?))?") %>%
+          regex = "([A-Za-zÀ-ȕ]+\\.?(?:\\-[A-Za-zÀ-ȕ]+)?)\\s*(?:([^\\s,]+)\\s)?(?:([A-Za-zÀ-ȕ]+(?:\\sJr\\.)?))?") %>%
   extract(fourth,
           into = c("Collector.First.Name4", "Collector.Middle4", "Collector.Last.Name4"),
-          regex = "([A-Za-zÀ-ȕ]+\\.?)\\s*(?:([^\\s,]+)\\s)?(?:([A-Za-zÀ-ȕ]+(?:\\sJr\\.)?))?") %>%
+          regex = "([A-Za-zÀ-ȕ]+\\.?(?:\\-[A-Za-zÀ-ȕ]+)?)\\s*(?:([^\\s,]+)\\s)?(?:([A-Za-zÀ-ȕ]+(?:\\sJr\\.)?))?") %>%
   extract(fifth,
           into = c("Collector.First.Name5", "Collector.Middle5", "Collector.Last.Name5"),
-          regex = "([A-Za-zÀ-ȕ]+\\.?)\\s*(?:([^\\s,]+)\\s)?(?:([A-Za-zÀ-ȕ]+(?:\\sJr\\.)?))?") %>%
+          regex = "([A-Za-zÀ-ȕ]+\\.?(?:\\-[A-Za-zÀ-ȕ]+)?)\\s*(?:([^\\s,]+)\\s)?(?:([A-Za-zÀ-ȕ]+(?:\\sJr\\.)?))?") %>%
   extract(sixth,
           into = c("Collector.First.Name6", "Collector.Middle6", "Collector.Last.Name6"),
-          regex = "([A-Za-zÀ-ȕ]+\\.?)\\s*(?:([^\\s,]+)\\s)?(?:([A-Za-zÀ-ȕ]+(?:\\sJr\\.)?))?") %>%
+          regex = "([A-Za-zÀ-ȕ]+\\.?(?:\\-[A-Za-zÀ-ȕ]+)?)\\s*(?:([^\\s,]+)\\s)?(?:([A-Za-zÀ-ȕ]+(?:\\sJr\\.)?))?") %>%
   extract(seventh,
           into = c("Collector.First.Name7", "Collector.Middle7", "Collector.Last.Name7"),
-          regex = "([A-Za-zÀ-ȕ]+\\.?)\\s*(?:([^\\s,]+)\\s)?(?:([A-Za-zÀ-ȕ]+(?:\\sJr\\.)?))?") %>%
+          regex = "([A-Za-zÀ-ȕ]+\\.?(?:\\-[A-Za-zÀ-ȕ]+)?)\\s*(?:([^\\s,]+)\\s)?(?:([A-Za-zÀ-ȕ]+(?:\\sJr\\.)?))?") %>%
   mutate(Collector.Last.Name2 = gsub(pattern = "^(de)(la)([A-Za-zÀ-ȕ]+)", "\\1 \\2 \\3", Collector.Last.Name2)) %>%
   mutate(Collector.Last.Name2 = gsub(pattern = "^(de)([A-Za-zÀ-ȕ]+)", "\\1 \\2", Collector.Last.Name2)) %>%
   mutate(Collector.Last.Name3 = gsub(pattern = "^(de)(la)([A-Za-zÀ-ȕ]+)", "\\1 \\2 \\3", Collector.Last.Name3)) %>%
@@ -312,17 +322,9 @@ sym_names <- sym_names %>%
 #sym_names$eventDate <- as.Date(sym_names$eventDate, tryFormats = c("%Y-%m-%d","%m/%d/%y","%Y"))
 
 
-### sending a warning message if Genus column is empty ###
-# shows which barcodes contain an empty Genus
-check_genus <- function(sym_names){
-  if (any(is.na(sym_names$genus)) ){
-    print(sym_names$catalogNumber[is.na(sym_names$genus)])
-  }
-  else {
-    print()
-  }
-}
-check_genus(sym_names)
+### making duplicate dataframe containing old column names ###
+# this is used below to print out barcodes for samples missing a genus
+genus_check_df <- sym_names
 
 
 ### making columns that have duplicate info in specify
@@ -362,7 +364,7 @@ colnames(sym_names)[colnames(sym_names) == "individualCount"] <- "Abundance"
 colnames(sym_names)[colnames(sym_names) == "occurrenceRemarks"] <- "Comments (Collection Data)"
 colnames(sym_names)[colnames(sym_names) == "infraspecificEpithet"] <- "Variety1"
 colnames(sym_names)[colnames(sym_names) == "eventDate"] <- "Date"
-colnames(sym_names)[colnames(sym_names) == "verbatimDate"] <- "Verbatim Date"
+colnames(sym_names)[colnames(sym_names) == "verbatimEventDate"] <- "Verbatim Date"
 colnames(sym_names)[colnames(sym_names) == "dateIdentified"] <- "Ann Date 1"
 colnames(sym_names)[colnames(sym_names) == "verbatimAnnDate"] <- "Verb Ann Date 1"
 colnames(sym_names)[colnames(sym_names) == "verbatimAttributes"] <- "Field Characteristics"
@@ -383,31 +385,44 @@ sym_names[is.na(sym_names)] <- ""
 
 ### save output as a csv file ###
 # fixing encoding of columns
-Encoding(sym_names$Collector.First.Name1) = "latin1"
-Encoding(sym_names$Collector.Middle.Name1) = "latin1"
-Encoding(sym_names$Collector.Last.Name1) = "latin1"
-Encoding(sym_names$Collector.First.Name2) = "latin1"
-Encoding(sym_names$Collector.Middle.Name2) = "latin1"
-Encoding(sym_names$Collector.Last.Name2) = "latin1"
-Encoding(sym_names$Collector.First.Name3) = "latin1"
-Encoding(sym_names$Collector.Middle.Name3) = "latin1"
-Encoding(sym_names$Collector.Last.Name3) = "latin1"
-Encoding(sym_names$Collector.First.Name4) = "latin1"
-Encoding(sym_names$Collector.Middle.Name4) = "latin1"
-Encoding(sym_names$Collector.Last.Name4) = "latin1"
-Encoding(sym_names$Collector.First.Name5) = "latin1"
-Encoding(sym_names$Collector.Middle.Name5) = "latin1"
-Encoding(sym_names$Collector.Last.Name5) = "latin1"
-Encoding(sym_names$Collector.First.Name6) = "latin1"
-Encoding(sym_names$Collector.Middle.Name6) = "latin1"
-Encoding(sym_names$Collector.Last.Name6) = "latin1"
-Encoding(sym_names$Collector.First.Name7) = "latin1"
-Encoding(sym_names$Collector.Middle.Name7) = "latin1"
-Encoding(sym_names$Collector.Last.Name7) = "latin1"
-Encoding(sym_names$Determiner.First.Name1) = "latin1"
-Encoding(sym_names$Determiner.Middle.Name1) = "latin1"
-Encoding(sym_names$Determiner.Last.Name1) = "latin1"
+Encoding(sym_names$`Collector First Name1`) = "latin1"
+Encoding(sym_names$`Collector Middle1`) = "latin1"
+Encoding(sym_names$`Collector Last Name1`) = "latin1"
+Encoding(sym_names$`Collector First Name2`) = "latin1"
+Encoding(sym_names$`Collector Middle2`) = "latin1"
+Encoding(sym_names$`Collector Last Name2`) = "latin1"
+Encoding(sym_names$`Collector First Name3`) = "latin1"
+Encoding(sym_names$`Collector Middle3`) = "latin1"
+Encoding(sym_names$`Collector Last Name3`) = "latin1"
+Encoding(sym_names$`Collector First Name4`) = "latin1"
+Encoding(sym_names$`Collector Middle4`) = "latin1"
+Encoding(sym_names$`Collector Last Name4`) = "latin1"
+Encoding(sym_names$`Collector First Name5`) = "latin1"
+Encoding(sym_names$`Collector Middle5`) = "latin1"
+Encoding(sym_names$`Collector Last Name5`) = "latin1"
+Encoding(sym_names$`Collector First Name6`) = "latin1"
+Encoding(sym_names$`Collector Middle6`) = "latin1"
+Encoding(sym_names$`Collector Last Name6`) = "latin1"
+Encoding(sym_names$`Collector First Name7`) = "latin1"
+Encoding(sym_names$`Collector Middle7`) = "latin1"
+Encoding(sym_names$`Collector Last Name7`) = "latin1"
+Encoding(sym_names$`Determiner First Name1`) = "latin1"
+Encoding(sym_names$`Determiner Middle1`) = "latin1"
+Encoding(sym_names$`Determiner Last Name1`) = "latin1"
 # can change "sym_to_spec" to whatever name you want the new file to be named
 write_excel_csv(sym_names, file="sym_to_spec.csv")
+
+
+### sending a warning message if genus column is empty ###
+# shows which barcodes contain an empty genus
+check_genus <- function(df){
+  if (any(is.na(genus_check_df$genus)) ){
+    print(genus_check_df$catalogNumber[is.na(genus_check_df$genus)])
+  }
+  else {
+    print()
+  }
+}
+check_genus(genus_check_df)
 
 
