@@ -34,3 +34,8 @@ spec2 <- spec %>%
   mutate(recordedBy = gsub(pattern = ",;", "; ", recordedBy)) %>%
   mutate(recordedBy = gsub(pattern = "  ", " ", recordedBy))
 
+
+### fixing encoding of name columns ###
+Encoding(spec2$recordedBy) = "latin1"
+# can change "spec_to_sym" to whatever name you want the new file to be named
+write_excel_csv(spec2, file="spec_to_sym.csv")
