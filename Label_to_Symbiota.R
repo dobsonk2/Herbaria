@@ -131,9 +131,9 @@ label_col_remove2[is.na(label_col_remove2)] <- ""
 
 ### save output as a csv file ###
 # fixing encoding of columns
-Encoding(label_col_remove2$identifiedBy) = "latin1"
-Encoding(label_col_remove2$recordedBy) = "latin1"
-Encoding(label_col_remove2$associatedCollectors) = "latin1"
+#Encoding(label_col_remove2$identifiedBy) = "latin1"
+#Encoding(label_col_remove2$recordedBy) = "latin1"
+#Encoding(label_col_remove2$associatedCollectors) = "latin1"
 # can change "test" to whatever name you want the new file to be named
 # when working with specific kingdoms, be sure to differentiate the names here
 write_excel_csv(label_col_remove2, file="test_plants.csv")

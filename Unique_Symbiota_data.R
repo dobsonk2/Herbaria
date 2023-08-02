@@ -20,7 +20,7 @@ library(readr)
 ### Read in data ###
 # download Symbiota data and Specify barcodes as UTF-8
 # change the name for the symbiota data file to match the name of the file you downloaded from Symbiota
-sym <- read_csv("20230706 Symbiota.csv")
+sym <- read_csv("20230706 Symbiota.csv", locale=readr::locale(encoding="latin1")
 sym <- as.data.frame(sym)
 spec <- read_csv("All Specify barcodes.csv")
 spec <- as.data.frame(spec)
@@ -46,9 +46,9 @@ sym2[is.na(sym2)] <- ""
 
 ### save outputs as csv files ###
 # can change "name.csv" to whatever name you want the new file to be named
-Encoding(sym2$identifiedBy) = "latin1"
-Encoding(sym2$recordedBy) = "latin1"
-Encoding(sym2$associatedCollectors) = "latin1"
-Encoding(sym2$scientificNameAuthorship) = "latin1"
+#Encoding(sym2$identifiedBy) = "latin1"
+#Encoding(sym2$recordedBy) = "latin1"
+#Encoding(sym2$associatedCollectors) = "latin1"
+#Encoding(sym2$scientificNameAuthorship) = "latin1"
 write_excel_csv(sym2, file="unique_symbiota_data.csv")
 write.csv(spec2, "updated_Specify_barcodes.csv", row.names=F, fileEncoding = "UTF-8")

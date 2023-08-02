@@ -172,7 +172,7 @@ sym_col_remove <- sym_col_remove %>%
   mutate(recordedBy=str_replace_all(recordedBy,"\\, II\\.?"," II")) %>%
   mutate(recordedBy=str_replace_all(recordedBy,"\\, III\\.?"," III"))
 # if multiple names are separated by commas, replace the comma with "and"
-sym_col_remove$recordedBy <- ifelse((str_detect(sym_col_remove$recordedBy, "[A-Za-zÀ-ȕ]+\\.?\\s[A-Za-zÀ-ȕ]+\\.?\\,\\s?(?!and)")) == TRUE,
+sym_col_remove$recordedBy <- ifelse((str_detect(sym_col_remove$recordedBy, "[A-Za-zÀ-ÖØ-öø-ÿ]+\\.?\\s[A-Za-zÀ-ÖØ-öø-ÿ]+\\.?\\,\\s?(?!and)")) == TRUE,
                    str_replace_all(sym_col_remove$recordedBy,"\\,\\s?(?!and)"," and "),
                    sym_col_remove$recordedBy)
 # replace any "et al" with nothing
@@ -194,11 +194,11 @@ sym_names <- sym_col_remove %>%
   separate(col = recordedBy, into = c("first_collect", "additional_collect"), sep = " and ", extra = "merge") %>%
   extract(first_collect,
           into = c("Collector.First.Name1", "Collector.Middle1", "Collector.Last.Name1"),
-          regex = "([A-Za-zÀ-ȕ]+\\.?(?:\\-[A-Za-zÀ-ȕ]+)?)\\s*(?:([^\\s,]+)\\s)?(?:([A-Za-zÀ-ȕ]+(?:\\sJr\\.)?))?") %>%
-  mutate(Collector.Last.Name1 = gsub(pattern = "^(de)(la)([A-Za-zÀ-ȕ]+)", "\\1 \\2 \\3", Collector.Last.Name1)) %>%
-  mutate(Collector.Last.Name1 = gsub(pattern = "^(de)([A-Za-zÀ-ȕ]+)", "\\1 \\2", Collector.Last.Name1)) %>%
-  mutate(Collector.Last.Name1 = gsub(pattern = "^(du)([A-Za-zÀ-ȕ]+)", "\\1 \\2", Collector.Last.Name1)) %>%
-  mutate(Collector.Last.Name1 = gsub(pattern = "^(von)([A-Za-zÀ-ȕ]+)", "\\1 \\2", Collector.Last.Name1))
+          regex = "([A-Za-zÀ-ÖØ-öø-ÿ]+\\.?(?:\\-[A-Za-zÀ-ÖØ-öø-ÿ]+)?)\\s*(?:([^\\s,]+)\\s)?(?:([A-Za-zÀ-ÖØ-öø-ÿ]+(?:\\sJr\\.)?))?") %>%
+  mutate(Collector.Last.Name1 = gsub(pattern = "^(de)(la)([A-Za-zÀ-ÖØ-öø-ÿ]+)", "\\1 \\2 \\3", Collector.Last.Name1)) %>%
+  mutate(Collector.Last.Name1 = gsub(pattern = "^(de)([A-Za-zÀ-ÖØ-öø-ÿ]+)", "\\1 \\2", Collector.Last.Name1)) %>%
+  mutate(Collector.Last.Name1 = gsub(pattern = "^(du)([A-Za-zÀ-ÖØ-öø-ÿ]+)", "\\1 \\2", Collector.Last.Name1)) %>%
+  mutate(Collector.Last.Name1 = gsub(pattern = "^(von)([A-Za-zÀ-ÖØ-öø-ÿ]+)", "\\1 \\2", Collector.Last.Name1))
 # pasting in extra names as additional collectors
 sym_names$additional_collect[is.na(sym_names$additional_collect)] <- ""
 sym_names$associatedCollectors <- ifelse(sym_names$additional_collect == "",
@@ -216,7 +216,7 @@ sym_names <- sym_names %>%
   mutate(identifiedBy=str_replace_all(identifiedBy,"\\, II\\.?"," II")) %>%
   mutate(identifiedBy=str_replace_all(identifiedBy,"\\, III\\.?"," III"))
 # if multiple names are separated by commas, replace the comma with "and"
-sym_names$identifiedBy <- ifelse((str_detect(sym_names$identifiedBy, "[A-Za-zÀ-ȕ]+\\.?\\s[A-Za-zÀ-ȕ]+\\.?\\,\\s?(?!and)")) == TRUE,
+sym_names$identifiedBy <- ifelse((str_detect(sym_names$identifiedBy, "[A-Za-zÀ-ÖØ-öø-ÿ]+\\.?\\s[A-Za-zÀ-ÖØ-öø-ÿ]+\\.?\\,\\s?(?!and)")) == TRUE,
                                     str_replace_all(sym_names$identifiedBy,"\\,\\s?(?!and)"," and "),
                                     sym_names$identifiedBy)
 # splitting the first collector name into first, middle, and last
@@ -237,11 +237,11 @@ sym_names <- sym_names %>%
   separate(col = identifiedBy, into = c("first_ID", "additional_ID"), sep = " and ", extra = "merge") %>%
   extract(first_ID,
           into = c("Determiner.First.Name1", "Determiner.Middle1", "Determiner.Last.Name1"),
-          regex = "([A-Za-zÀ-ȕ]+\\.?(?:\\-[A-Za-zÀ-ȕ]+)?)\\s*(?:([^\\s,]+)\\s)?(?:([A-Za-zÀ-ȕ]+(?:\\sJr\\.)?))?") %>%
-  mutate(Determiner.Last.Name1 = gsub(pattern = "^(de)(la)([A-Za-zÀ-ȕ]+)", "\\1 \\2 \\3", Determiner.Last.Name1)) %>%
-  mutate(Determiner.Last.Name1 = gsub(pattern = "^(de)([A-Za-zÀ-ȕ]+)", "\\1 \\2", Determiner.Last.Name1)) %>%
-  mutate(Determiner.Last.Name1 = gsub(pattern = "^(du)([A-Za-zÀ-ȕ]+)", "\\1 \\2", Determiner.Last.Name1)) %>%
-  mutate(Determiner.Last.Name1 = gsub(pattern = "^(von)([A-Za-zÀ-ȕ]+)", "\\1 \\2",Determiner.Last.Name1))
+          regex = "([A-Za-zÀ-ÖØ-öø-ÿ]+\\.?(?:\\-[A-Za-zÀ-ÖØ-öø-ÿ]+)?)\\s*(?:([^\\s,]+)\\s)?(?:([A-Za-zÀ-ÖØ-öø-ÿ]+(?:\\sJr\\.)?))?") %>%
+  mutate(Determiner.Last.Name1 = gsub(pattern = "^(de)(la)([A-Za-zÀ-ÖØ-öø-ÿ]+)", "\\1 \\2 \\3", Determiner.Last.Name1)) %>%
+  mutate(Determiner.Last.Name1 = gsub(pattern = "^(de)([A-Za-zÀ-ÖØ-öø-ÿ]+)", "\\1 \\2", Determiner.Last.Name1)) %>%
+  mutate(Determiner.Last.Name1 = gsub(pattern = "^(du)([A-Za-zÀ-ÖØ-öø-ÿ]+)", "\\1 \\2", Determiner.Last.Name1)) %>%
+  mutate(Determiner.Last.Name1 = gsub(pattern = "^(von)([A-Za-zÀ-ÖØ-öø-ÿ]+)", "\\1 \\2",Determiner.Last.Name1))
 # removing additional determiners since we don't need them
 sym_names = subset(sym_names, select = -c(additional_ID))
 
@@ -254,7 +254,7 @@ sym_names <- sym_names %>%
   mutate(associatedCollectors=str_replace_all(associatedCollectors,"\\, II\\.?"," II")) %>%
   mutate(associatedCollectors=str_replace_all(associatedCollectors,"\\, III\\.?"," III"))
 # if multiple names are separated by commas, replace the comma with "and"
-sym_names$associatedCollectors <- ifelse((str_detect(sym_names$associatedCollectors, "[A-Za-zÀ-ȕ]+\\.?\\s[A-Za-zÀ-ȕ]+\\.?\\,\\s?(?!and)")) == TRUE,
+sym_names$associatedCollectors <- ifelse((str_detect(sym_names$associatedCollectors, "[A-Za-zÀ-ÖØ-öø-ÿ]+\\.?\\s[A-Za-zÀ-ÖØ-öø-ÿ]+\\.?\\,\\s?(?!and)")) == TRUE,
                                  str_replace_all(sym_names$associatedCollectors,"\\,\\s?(?!and)"," and "),
                                  sym_names$associatedCollectors)
 sym_names$associatedCollectors <- ifelse((str_detect(sym_names$associatedCollectors, "et al\\.?")) == TRUE,
@@ -275,46 +275,46 @@ sym_names <- sym_names %>%
   separate(col = associatedCollectors, into = c("second", "third", "fourth" ,"fifth","sixth","seventh"), sep = " and ") %>%
   extract(second,
           into = c("Collector.First.Name2", "Collector.Middle2", "Collector.Last.Name2"),
-          regex = "([A-Za-zÀ-ȕ]+\\.?(?:\\-[A-Za-zÀ-ȕ]+)?)\\s*(?:([^\\s,]+)\\s)?(?:([A-Za-zÀ-ȕ]+(?:\\sJr\\.)?))?") %>%
+          regex = "([A-Za-zÀ-ÖØ-öø-ÿ]+\\.?(?:\\-[A-Za-zÀ-ÖØ-öø-ÿ]+)?)\\s*(?:([^\\s,]+)\\s)?(?:([A-Za-zÀ-ÖØ-öø-ÿ]+(?:\\sJr\\.)?))?") %>%
   extract(third,
           into = c("Collector.First.Name3", "Collector.Middle3", "Collector.Last.Name3"),
-          regex = "([A-Za-zÀ-ȕ]+\\.?(?:\\-[A-Za-zÀ-ȕ]+)?)\\s*(?:([^\\s,]+)\\s)?(?:([A-Za-zÀ-ȕ]+(?:\\sJr\\.)?))?") %>%
+          regex = "([A-Za-zÀ-ÖØ-öø-ÿ]+\\.?(?:\\-[A-Za-zÀ-ÖØ-öø-ÿ]+)?)\\s*(?:([^\\s,]+)\\s)?(?:([A-Za-zÀ-ÖØ-öø-ÿ]+(?:\\sJr\\.)?))?") %>%
   extract(fourth,
           into = c("Collector.First.Name4", "Collector.Middle4", "Collector.Last.Name4"),
-          regex = "([A-Za-zÀ-ȕ]+\\.?(?:\\-[A-Za-zÀ-ȕ]+)?)\\s*(?:([^\\s,]+)\\s)?(?:([A-Za-zÀ-ȕ]+(?:\\sJr\\.)?))?") %>%
+          regex = "([A-Za-zÀ-ÖØ-öø-ÿ]+\\.?(?:\\-[A-Za-zÀ-ÖØ-öø-ÿ]+)?)\\s*(?:([^\\s,]+)\\s)?(?:([A-Za-zÀ-ÖØ-öø-ÿ]+(?:\\sJr\\.)?))?") %>%
   extract(fifth,
           into = c("Collector.First.Name5", "Collector.Middle5", "Collector.Last.Name5"),
-          regex = "([A-Za-zÀ-ȕ]+\\.?(?:\\-[A-Za-zÀ-ȕ]+)?)\\s*(?:([^\\s,]+)\\s)?(?:([A-Za-zÀ-ȕ]+(?:\\sJr\\.)?))?") %>%
+          regex = "([A-Za-zÀ-ÖØ-öø-ÿ]+\\.?(?:\\-[A-Za-zÀ-ÖØ-öø-ÿ]+)?)\\s*(?:([^\\s,]+)\\s)?(?:([A-Za-zÀ-ÖØ-öø-ÿ]+(?:\\sJr\\.)?))?") %>%
   extract(sixth,
           into = c("Collector.First.Name6", "Collector.Middle6", "Collector.Last.Name6"),
-          regex = "([A-Za-zÀ-ȕ]+\\.?(?:\\-[A-Za-zÀ-ȕ]+)?)\\s*(?:([^\\s,]+)\\s)?(?:([A-Za-zÀ-ȕ]+(?:\\sJr\\.)?))?") %>%
+          regex = "([A-Za-zÀ-ÖØ-öø-ÿ]+\\.?(?:\\-[A-Za-zÀ-ÖØ-öø-ÿ]+)?)\\s*(?:([^\\s,]+)\\s)?(?:([A-Za-zÀ-ÖØ-öø-ÿ]+(?:\\sJr\\.)?))?") %>%
   extract(seventh,
           into = c("Collector.First.Name7", "Collector.Middle7", "Collector.Last.Name7"),
-          regex = "([A-Za-zÀ-ȕ]+\\.?(?:\\-[A-Za-zÀ-ȕ]+)?)\\s*(?:([^\\s,]+)\\s)?(?:([A-Za-zÀ-ȕ]+(?:\\sJr\\.)?))?") %>%
-  mutate(Collector.Last.Name2 = gsub(pattern = "^(de)(la)([A-Za-zÀ-ȕ]+)", "\\1 \\2 \\3", Collector.Last.Name2)) %>%
-  mutate(Collector.Last.Name2 = gsub(pattern = "^(de)([A-Za-zÀ-ȕ]+)", "\\1 \\2", Collector.Last.Name2)) %>%
-  mutate(Collector.Last.Name3 = gsub(pattern = "^(de)(la)([A-Za-zÀ-ȕ]+)", "\\1 \\2 \\3", Collector.Last.Name3)) %>%
-  mutate(Collector.Last.Name3 = gsub(pattern = "^(de)([A-Za-zÀ-ȕ]+)", "\\1 \\2", Collector.Last.Name3)) %>%
-  mutate(Collector.Last.Name4 = gsub(pattern = "^(de)(la)([A-Za-zÀ-ȕ]+)", "\\1 \\2 \\3", Collector.Last.Name4)) %>%
-  mutate(Collector.Last.Name4 = gsub(pattern = "^(de)([A-Za-zÀ-ȕ]+)", "\\1 \\2", Collector.Last.Name4)) %>%
-  mutate(Collector.Last.Name5 = gsub(pattern = "^(de)(la)([A-Za-zÀ-ȕ]+)", "\\1 \\2 \\3", Collector.Last.Name5)) %>%
-  mutate(Collector.Last.Name5 = gsub(pattern = "^(de)([A-Za-zÀ-ȕ]+)", "\\1 \\2", Collector.Last.Name5)) %>%
-  mutate(Collector.Last.Name6 = gsub(pattern = "^(de)(la)([A-Za-zÀ-ȕ]+)", "\\1 \\2 \\3", Collector.Last.Name6)) %>%
-  mutate(Collector.Last.Name6 = gsub(pattern = "^(de)([A-Za-zÀ-ȕ]+)", "\\1 \\2", Collector.Last.Name6)) %>%
-  mutate(Collector.Last.Name7 = gsub(pattern = "^(de)(la)([A-Za-zÀ-ȕ]+)", "\\1 \\2 \\3", Collector.Last.Name7)) %>%
-  mutate(Collector.Last.Name7 = gsub(pattern = "^(de)([A-Za-zÀ-ȕ]+)", "\\1 \\2", Collector.Last.Name7)) %>%
-  mutate(Collector.Last.Name2 = gsub(pattern = "^(du)([A-Za-zÀ-ȕ]+)", "\\1 \\2", Collector.Last.Name2)) %>%
-  mutate(Collector.Last.Name2 = gsub(pattern = "^(von)([A-Za-zÀ-ȕ]+)", "\\1 \\2",Collector.Last.Name2)) %>%
-  mutate(Collector.Last.Name3 = gsub(pattern = "^(du)([A-Za-zÀ-ȕ]+)", "\\1 \\2", Collector.Last.Name3)) %>%
-  mutate(Collector.Last.Name3 = gsub(pattern = "^(von)([A-Za-zÀ-ȕ]+)", "\\1 \\2",Collector.Last.Name3)) %>%
-  mutate(Collector.Last.Name4 = gsub(pattern = "^(du)([A-Za-zÀ-ȕ]+)", "\\1 \\2", Collector.Last.Name4)) %>%
-  mutate(Collector.Last.Name4 = gsub(pattern = "^(von)([A-Za-zÀ-ȕ]+)", "\\1 \\2",Collector.Last.Name4)) %>%
-  mutate(Collector.Last.Name5 = gsub(pattern = "^(du)([A-Za-zÀ-ȕ]+)", "\\1 \\2", Collector.Last.Name5)) %>%
-  mutate(Collector.Last.Name5 = gsub(pattern = "^(von)([A-Za-zÀ-ȕ]+)", "\\1 \\2",Collector.Last.Name5)) %>%
-  mutate(Collector.Last.Name6 = gsub(pattern = "^(du)([A-Za-zÀ-ȕ]+)", "\\1 \\2", Collector.Last.Name6)) %>%
-  mutate(Collector.Last.Name6 = gsub(pattern = "^(von)([A-Za-zÀ-ȕ]+)", "\\1 \\2",Collector.Last.Name6)) %>%
-  mutate(Collector.Last.Name7 = gsub(pattern = "^(du)([A-Za-zÀ-ȕ]+)", "\\1 \\2", Collector.Last.Name7)) %>%
-  mutate(Collector.Last.Name7 = gsub(pattern = "^(von)([A-Za-zÀ-ȕ]+)", "\\1 \\2",Collector.Last.Name7))
+          regex = "([A-Za-zÀ-ÖØ-öø-ÿ]+\\.?(?:\\-[A-Za-zÀ-ÖØ-öø-ÿ]+)?)\\s*(?:([^\\s,]+)\\s)?(?:([A-Za-zÀ-ÖØ-öø-ÿ]+(?:\\sJr\\.)?))?") %>%
+  mutate(Collector.Last.Name2 = gsub(pattern = "^(de)(la)([A-Za-zÀ-ÖØ-öø-ÿ]+)", "\\1 \\2 \\3", Collector.Last.Name2)) %>%
+  mutate(Collector.Last.Name2 = gsub(pattern = "^(de)([A-Za-zÀ-ÖØ-öø-ÿ]+)", "\\1 \\2", Collector.Last.Name2)) %>%
+  mutate(Collector.Last.Name3 = gsub(pattern = "^(de)(la)([A-Za-zÀ-ÖØ-öø-ÿ]+)", "\\1 \\2 \\3", Collector.Last.Name3)) %>%
+  mutate(Collector.Last.Name3 = gsub(pattern = "^(de)([A-Za-zÀ-ÖØ-öø-ÿ]+)", "\\1 \\2", Collector.Last.Name3)) %>%
+  mutate(Collector.Last.Name4 = gsub(pattern = "^(de)(la)([A-Za-zÀ-ÖØ-öø-ÿ]+)", "\\1 \\2 \\3", Collector.Last.Name4)) %>%
+  mutate(Collector.Last.Name4 = gsub(pattern = "^(de)([A-Za-zÀ-ÖØ-öø-ÿ]+)", "\\1 \\2", Collector.Last.Name4)) %>%
+  mutate(Collector.Last.Name5 = gsub(pattern = "^(de)(la)([A-Za-zÀ-ÖØ-öø-ÿ]+)", "\\1 \\2 \\3", Collector.Last.Name5)) %>%
+  mutate(Collector.Last.Name5 = gsub(pattern = "^(de)([A-Za-zÀ-ÖØ-öø-ÿ]+)", "\\1 \\2", Collector.Last.Name5)) %>%
+  mutate(Collector.Last.Name6 = gsub(pattern = "^(de)(la)([A-Za-zÀ-ÖØ-öø-ÿ]+)", "\\1 \\2 \\3", Collector.Last.Name6)) %>%
+  mutate(Collector.Last.Name6 = gsub(pattern = "^(de)([A-Za-zÀ-ÖØ-öø-ÿ]+)", "\\1 \\2", Collector.Last.Name6)) %>%
+  mutate(Collector.Last.Name7 = gsub(pattern = "^(de)(la)([A-Za-zÀ-ÖØ-öø-ÿ]+)", "\\1 \\2 \\3", Collector.Last.Name7)) %>%
+  mutate(Collector.Last.Name7 = gsub(pattern = "^(de)([A-Za-zÀ-ÖØ-öø-ÿ]+)", "\\1 \\2", Collector.Last.Name7)) %>%
+  mutate(Collector.Last.Name2 = gsub(pattern = "^(du)([A-Za-zÀ-ÖØ-öø-ÿ]+)", "\\1 \\2", Collector.Last.Name2)) %>%
+  mutate(Collector.Last.Name2 = gsub(pattern = "^(von)([A-Za-zÀ-ÖØ-öø-ÿ]+)", "\\1 \\2",Collector.Last.Name2)) %>%
+  mutate(Collector.Last.Name3 = gsub(pattern = "^(du)([A-Za-zÀ-ÖØ-öø-ÿ]+)", "\\1 \\2", Collector.Last.Name3)) %>%
+  mutate(Collector.Last.Name3 = gsub(pattern = "^(von)([A-Za-zÀ-ÖØ-öø-ÿ]+)", "\\1 \\2",Collector.Last.Name3)) %>%
+  mutate(Collector.Last.Name4 = gsub(pattern = "^(du)([A-Za-zÀ-ÖØ-öø-ÿ]+)", "\\1 \\2", Collector.Last.Name4)) %>%
+  mutate(Collector.Last.Name4 = gsub(pattern = "^(von)([A-Za-zÀ-ÖØ-öø-ÿ]+)", "\\1 \\2",Collector.Last.Name4)) %>%
+  mutate(Collector.Last.Name5 = gsub(pattern = "^(du)([A-Za-zÀ-ÖØ-öø-ÿ]+)", "\\1 \\2", Collector.Last.Name5)) %>%
+  mutate(Collector.Last.Name5 = gsub(pattern = "^(von)([A-Za-zÀ-ÖØ-öø-ÿ]+)", "\\1 \\2",Collector.Last.Name5)) %>%
+  mutate(Collector.Last.Name6 = gsub(pattern = "^(du)([A-Za-zÀ-ÖØ-öø-ÿ]+)", "\\1 \\2", Collector.Last.Name6)) %>%
+  mutate(Collector.Last.Name6 = gsub(pattern = "^(von)([A-Za-zÀ-ÖØ-öø-ÿ]+)", "\\1 \\2",Collector.Last.Name6)) %>%
+  mutate(Collector.Last.Name7 = gsub(pattern = "^(du)([A-Za-zÀ-ÖØ-öø-ÿ]+)", "\\1 \\2", Collector.Last.Name7)) %>%
+  mutate(Collector.Last.Name7 = gsub(pattern = "^(von)([A-Za-zÀ-ÖØ-öø-ÿ]+)", "\\1 \\2",Collector.Last.Name7))
 
 
 ### transforming dates so that they are all one format ###
@@ -385,30 +385,30 @@ sym_names[is.na(sym_names)] <- ""
 
 ### save output as a csv file ###
 # fixing encoding of columns
-Encoding(sym_names$`Collector First Name1`) = "latin1"
-Encoding(sym_names$`Collector Middle1`) = "latin1"
-Encoding(sym_names$`Collector Last Name1`) = "latin1"
-Encoding(sym_names$`Collector First Name2`) = "latin1"
-Encoding(sym_names$`Collector Middle2`) = "latin1"
-Encoding(sym_names$`Collector Last Name2`) = "latin1"
-Encoding(sym_names$`Collector First Name3`) = "latin1"
-Encoding(sym_names$`Collector Middle3`) = "latin1"
-Encoding(sym_names$`Collector Last Name3`) = "latin1"
-Encoding(sym_names$`Collector First Name4`) = "latin1"
-Encoding(sym_names$`Collector Middle4`) = "latin1"
-Encoding(sym_names$`Collector Last Name4`) = "latin1"
-Encoding(sym_names$`Collector First Name5`) = "latin1"
-Encoding(sym_names$`Collector Middle5`) = "latin1"
-Encoding(sym_names$`Collector Last Name5`) = "latin1"
-Encoding(sym_names$`Collector First Name6`) = "latin1"
-Encoding(sym_names$`Collector Middle6`) = "latin1"
-Encoding(sym_names$`Collector Last Name6`) = "latin1"
-Encoding(sym_names$`Collector First Name7`) = "latin1"
-Encoding(sym_names$`Collector Middle7`) = "latin1"
-Encoding(sym_names$`Collector Last Name7`) = "latin1"
-Encoding(sym_names$`Determiner First Name1`) = "latin1"
-Encoding(sym_names$`Determiner Middle1`) = "latin1"
-Encoding(sym_names$`Determiner Last Name1`) = "latin1"
+#Encoding(sym_names$`Collector First Name1`) = "latin1"
+#Encoding(sym_names$`Collector Middle1`) = "latin1"
+#Encoding(sym_names$`Collector Last Name1`) = "latin1"
+#Encoding(sym_names$`Collector First Name2`) = "latin1"
+#Encoding(sym_names$`Collector Middle2`) = "latin1"
+#Encoding(sym_names$`Collector Last Name2`) = "latin1"
+#Encoding(sym_names$`Collector First Name3`) = "latin1"
+#Encoding(sym_names$`Collector Middle3`) = "latin1"
+#Encoding(sym_names$`Collector Last Name3`) = "latin1"
+#Encoding(sym_names$`Collector First Name4`) = "latin1"
+#Encoding(sym_names$`Collector Middle4`) = "latin1"
+#Encoding(sym_names$`Collector Last Name4`) = "latin1"
+#Encoding(sym_names$`Collector First Name5`) = "latin1"
+#Encoding(sym_names$`Collector Middle5`) = "latin1"
+#Encoding(sym_names$`Collector Last Name5`) = "latin1"
+#Encoding(sym_names$`Collector First Name6`) = "latin1"
+#Encoding(sym_names$`Collector Middle6`) = "latin1"
+#Encoding(sym_names$`Collector Last Name6`) = "latin1"
+#Encoding(sym_names$`Collector First Name7`) = "latin1"
+#Encoding(sym_names$`Collector Middle7`) = "latin1"
+#Encoding(sym_names$`Collector Last Name7`) = "latin1"
+#Encoding(sym_names$`Determiner First Name1`) = "latin1"
+#Encoding(sym_names$`Determiner Middle1`) = "latin1"
+#Encoding(sym_names$`Determiner Last Name1`) = "latin1"
 # can change "sym_to_spec" to whatever name you want the new file to be named
 write_excel_csv(sym_names, file="sym_to_spec.csv")
 
@@ -423,6 +423,7 @@ check_genus <- function(df){
     print()
   }
 }
-check_genus(genus_check_df)
+df1 <- as.data.frame(check_genus(genus_check_df))
 
+write.csv(df1, "missing_genus.csv",row.names=F)
 
