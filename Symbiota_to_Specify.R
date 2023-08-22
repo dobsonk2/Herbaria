@@ -43,7 +43,7 @@ sym_col_remove <- sym %>%
   select(any_of(c("id","occurrenceID","catalogNumber","otherCatalogNumbers","genus","specificEpithet","infraspecificEpithet","identifiedBy","dateIdentified",  
                   "recordedBy","associatedCollectors","recordNumber","eventDate","occurrenceRemarks","habitat","substrate","verbatimAttributes",
                   "associatedTaxa","individualCount","preparations","country","stateProvince","county","locality","decimalLatitude",  
-                  "decimalLongitude","verbatimCoordinates","verbatimEventDate")))
+                  "decimalLongitude","verbatimCoordinates","verbatimEventDate","cultivationStatus")))
 
 
 ### selecting ID and image url from multimedia dataframe ###
@@ -98,6 +98,25 @@ sym_col_remove$occurrenceRemarks <- str_remove_all(sym_col_remove$occurrenceRema
 # check occurrence remarks & notes
 unique(sym_col_remove$occurrenceRemarks)
 unique(sym_col_remove$General..nComments)
+
+
+### adding cultivation status ###
+# if cultivationStatus is NA, make it a 0
+sym_col_remove$cultivationStatus[is.na(sym_col_remove$cultivationStatus)] <- 0
+# if cultivationStatus = 1, add "Cultivated" to occurrenceRemarkrs (i.e., Comments collection data)
+sym_col_remove$occurrenceRemarks <- ifelse(sym_col_remove$cultivationStatus == 1,
+                                paste0(sym_col_remove$occurrenceRemarks, " Cultivated."),
+                                sym_col_remove$occurrenceRemarks)
+# if "cultivated" was already written in occurrenceRemarks, remove the second "cultivated"
+sym_col_remove$occurrenceRemarks <-ifelse((str_detect(sym_col_remove$occurrenceRemarks, "[Cc]ultivated.\\s*Cultivated."))==T,
+                               str_replace_all(sym_col_remove$occurrenceRemarks,"[Cc]ultivated. Cultivated.","Cultivated."),
+                               sym_col_remove$occurrenceRemarks)
+# removing NA from beginning of "Cultivated." if occurrenceRemarks originally had NA
+sym_col_remove$occurrenceRemarks <-ifelse((str_detect(sym_col_remove$occurrenceRemarks, "NA\\s*"))==T,
+                               str_replace_all(sym_col_remove$occurrenceRemarks,"NA\\s*",""),
+                               sym_col_remove$occurrenceRemarks)
+# check occurrence remarks
+unique(sym_col_remove$occurrenceRemarks)
 
 
 ### # of sheets designation ###
@@ -335,7 +354,7 @@ sym_names$BarCode <- sym_names$catalogNumber
 
 
 ### removing unneeded column
-sym_names <- subset(sym_names, select=-c(id))
+sym_names <- subset(sym_names, select=-c(id, cultivationStatus))
 
 
 ### replace periods in column names with spaces ###
